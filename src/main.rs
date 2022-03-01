@@ -28,11 +28,12 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     // fu, borrow checker
     let mut copy_client = Client::connect(DATABASE_URL, NoTls)?;
     for table in get_tables(client)?.iter() {
-        let copy_statement = format!(r#"copy ({}) to stdout"#, table.copy_out_query("lksjd"));
+        let copy_statement = format!(r#"COPY ({}) TO stdout;"#, table.copy_out_query("lksjd"));
         let mut reader = copy_client.copy_out(&copy_statement)?;
         let mut buf = vec![];
         reader.read_to_end(&mut buf)?;
-        println!("{}", table.copy_in_query());
+        println!(r#"TRUNCATE TABLE {}."{}";"#, SCHEMA, table.name);
+        println!("{};", table.copy_in_query());
         println!("{}", std::str::from_utf8(&buf)?);
         println!("\\.");
     }
@@ -75,7 +76,7 @@ impl Table {
             .join(", ");
 
         format!(
-            r#"COPY "{SCHEMA}"."{}" ({}) FROM stdin;"#,
+            r#"COPY {SCHEMA}."{}" ({}) FROM stdin"#,
             self.name, column_list
         )
     }
@@ -94,7 +95,7 @@ impl Column {
 }
 
 fn get_tables(mut client: Client) -> Result<Vec<Table>, Box<dyn Error>> {
-    let tables: Vec<Table> = client
+    let mut tables: Vec<Table> = client
         .query(REFLECT_QUERY, &[])?
         .into_iter()
         .fold(
@@ -119,5 +120,8 @@ fn get_tables(mut client: Client) -> Result<Vec<Table>, Box<dyn Error>> {
             table
         })
         .collect();
+
+    tables.sort_by(|a, b| a.name.cmp(&b.name));
+
     Ok(tables)
 }
