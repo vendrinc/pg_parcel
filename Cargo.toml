@@ -2,7 +2,7 @@
 name = "pgslice"
 description = "Dump horizontal slices from PostgreSQL schemas"
 authors = ["Jacob Elder <jacob.elder@vendr.com>"]
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 repository = "https://github.com/Blissfully/pgslice"
 publish = false
