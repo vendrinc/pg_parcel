@@ -6,4 +6,5 @@ edition = "2021"
 [dependencies]
 postgres = "0.19.2"
 lazy_static = "1.4.0"
-# postgres-types = { version = "0.2.2", features = ["derive"] }
+dialoguer = "0.10.0"
+indicatif = "0.16.2"
