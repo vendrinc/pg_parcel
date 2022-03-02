@@ -1,4 +1,4 @@
-asset: app.zip
+asset: pgslice-apple-darwin
 tap: Blissfully/homebrew-tools/pgslice.rb
 template: >
   class PGSlice < Formula
