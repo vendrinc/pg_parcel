@@ -1,7 +1,11 @@
 [package]
 name = "pgslice"
+description = "Dump horizontal slices from PostgreSQL schemas"
+authors = ["Jacob Elder <jacob.elder@vendr.com>"]
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/Blissfully/pgslice"
+publish = false
 
 [dependencies]
 postgres = "0.19.2"

@@ -5,21 +5,6 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::io::Read;
 
-static DATABASE_URL: &str = "postgres://localhost:15432/postgres";
-
-static SCHEMA: &str = "saasdash";
-
-static REFLECT_QUERY: &str = r#"
-    select
-        table_name,
-        column_name,
-        case is_nullable when 'YES' then True else False end as is_nullable,
-        ordinal_position
-    from information_schema.columns
-    where table_schema = 'saasdash'
-    order by table_name, ordinal_position;
-"#;
-
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
@@ -30,6 +15,14 @@ struct Args {
     #[clap(short, long)]
     #[clap(default_value_t = String::from("OrganizationId"))]
     column: String,
+
+    #[clap(short, long)]
+    #[clap(default_value_t = String::from("saasdash"))]
+    schema: String,
+
+    #[clap(short, long)]
+    #[clap(default_value_t = String::from("postgres://localhost:15432/postgres"))]
+    database_url: String,
 }
 
 fn main() {
@@ -38,28 +31,27 @@ fn main() {
 }
 
 fn try_main(args: &Args) -> Result<(), Box<dyn Error>> {
-    let client = Client::connect(DATABASE_URL, NoTls)?;
-    // The weird `COPY TO` behavior requires some acrobatics that we avoid by
-    // just having a separate connection for it.
-    let mut copy_client = Client::connect(DATABASE_URL, NoTls)?;
+    let tables = get_tables(args)?;
 
-    let tables = get_tables(client)?;
     let pb = ProgressBar::new(tables.len() as u64);
     pb.set_style(
         ProgressStyle::default_bar().template("{msg} {spinner} {wide_bar:blue} eta {eta}"),
     );
     pb.enable_steady_tick(250);
 
+    let mut client = Client::connect(&args.database_url, NoTls)?;
+
     for table in tables.iter() {
         let copy_statement = format!(r#"COPY ({}) TO stdout;"#, table.copy_out_query(args));
         pb.set_message(format!("{:>30}", table.name));
-        let mut reader = copy_client.copy_out(&copy_statement)?;
+        let mut reader = client.copy_out(&copy_statement)?;
         let mut buf = vec![];
         reader.read_to_end(&mut buf)?;
         println!("{};", table.copy_in_query());
         println!("{}\\.", std::str::from_utf8(&buf)?);
         pb.inc(1);
     }
+
     pb.finish_with_message(format!("Dumped {} tables", tables.len()));
 
     Ok(())
@@ -69,6 +61,7 @@ fn try_main(args: &Args) -> Result<(), Box<dyn Error>> {
 struct Table {
     name: String,
     columns: Vec<Column>,
+    schema: String,
 }
 
 impl Table {
@@ -115,9 +108,10 @@ impl Table {
     }
     fn copy_in_query(&self) -> String {
         format!(
-            r#"COPY {SCHEMA}."{}" ({}) FROM stdin"#,
-            self.name,
-            self.column_list()
+            r#"COPY {schema}."{name}" ({columns}) FROM stdin"#,
+            schema = self.schema,
+            name = self.name,
+            columns = self.column_list()
         )
     }
     fn column_list(&self) -> String {
@@ -149,9 +143,23 @@ impl Column {
     }
 }
 
-fn get_tables(mut client: Client) -> Result<Vec<Table>, Box<dyn Error>> {
+fn get_tables(args: &Args) -> Result<Vec<Table>, Box<dyn Error>> {
+    let mut client = Client::connect(&args.database_url, NoTls)?;
+    let query = format!(
+        r#"
+        select
+            table_name,
+            column_name,
+            case is_nullable when 'YES' then True else False end as is_nullable,
+            ordinal_position
+        from information_schema.columns
+        where table_schema = '{schema}'
+        order by table_name, ordinal_position;
+    "#,
+        schema = args.schema,
+    );
     let mut tables: Vec<Table> = client
-        .query(REFLECT_QUERY, &[])?
+        .query(&query, &[])?
         .into_iter()
         .fold(
             HashMap::new(),
@@ -173,7 +181,11 @@ fn get_tables(mut client: Client) -> Result<Vec<Table>, Box<dyn Error>> {
         .into_iter()
         .map(|(name, mut columns)| {
             columns.sort_by(|a, b| a.position.cmp(&b.position));
-            let table = Table { name, columns };
+            let table = Table {
+                name,
+                columns,
+                schema: args.schema.to_owned(),
+            };
             table
         })
         .collect();
