@@ -1,0 +1,431 @@
+# The configurations that used for the recording, feel free to edit them
+config:
+  # Specify a command to be executed
+  # like `/bin/bash -l`, `ls`, or any other commands
+  # the default is bash for Linux
+  # or powershell.exe for Windows
+  command: bash -l
+
+  # Specify the current working directory path
+  # the default is the current working directory path
+  cwd: /Users/jacobelder/development/pg_parcel
+
+  # Export additional ENV variables
+  env:
+    recording: true
+
+  # Explicitly set the number of columns
+  # or use `auto` to take the current
+  # number of columns of your shell
+  cols: 80
+
+  # Explicitly set the number of rows
+  # or use `auto` to take the current
+  # number of rows of your shell
+  rows: 12
+
+  # Amount of times to repeat GIF
+  # If value is -1, play once
+  # If value is 0, loop indefinitely
+  # If value is a positive number, loop n times
+  repeat: 0
+
+  # Quality
+  # 1 - 100
+  quality: 100
+
+  # Delay between frames in ms
+  # If the value is `auto` use the actual recording delays
+  frameDelay: auto
+
+  # Maximum delay between frames in ms
+  # Ignored if the `frameDelay` isn't set to `auto`
+  # Set to `auto` to prevent limiting the max idle time
+  maxIdleTime: 250
+
+  # The surrounding frame box
+  # The `type` can be null, window, floating, or solid`
+  # To hide the title use the value null
+  # Don't forget to add a backgroundColor style with a null as type
+  frameBox:
+    type: solid
+    title: null
+    style: []
+
+  # Add a watermark image to the rendered gif
+  # You need to specify an absolute path for
+  # the image on your machine or a URL, and you can also
+  # add your own CSS styles
+  watermark:
+    imagePath: null
+    style:
+      position: absolute
+      right: 15px
+      bottom: 15px
+      width: 100px
+      opacity: 0.9
+
+  # Cursor style can be one of
+  # `block`, `underline`, or `bar`
+  cursorStyle: block
+
+  # Font family
+  # You can use any font that is installed on your machine
+  # in CSS-like syntax
+  fontFamily: "Fira Code"
+
+  # The size of the font
+  fontSize: 12
+
+  # The height of lines
+  lineHeight: 1
+
+  # The spacing between letters
+  letterSpacing: 0
+
+  # Theme
+  theme:
+    background: "transparent"
+    foreground: "#afafaf"
+    cursor: "#c7c7c7"
+    black: "#232628"
+    red: "#fc4384"
+    green: "#b3e33b"
+    yellow: "#ffa727"
+    blue: "#75dff2"
+    magenta: "#ae89fe"
+    cyan: "#708387"
+    white: "#d5d5d0"
+    brightBlack: "#626566"
+    brightRed: "#ff7fac"
+    brightGreen: "#c8ed71"
+    brightYellow: "#ebdf86"
+    brightBlue: "#75dff2"
+    brightMagenta: "#ae89fe"
+    brightCyan: "#b1c6ca"
+    brightWhite: "#f9f9f4"
+
+# Records, feel free to edit them
+records:
+  - delay: 0
+    content: "\r\e[C\e[Cpg_parcel"
+  - delay: 10
+    content: "\r\e[C\e[Cpg_parcel -i 731a3638"
+  - delay: 20
+    content: "\r\e[C\e[Cpg_parcel -i 731a3638-8e94-457c-"
+  - delay: 30
+    content: "\r\e[C\e[Cpg_parcel -i 731a3638-8e94-457c-a777-"
+  - delay: 40
+    content: "\r\e[C\e[Cpg_parcel -i 731a3638-8e94-457c-a777-9581741fd45f"
+  - delay: 50
+    content: "\r\e[C\e[Cpg_parcel -i 731a3638-8e94-457c-a777-9581741fd45f > dump.sql"
+  - delay: 937
+    content: "\r\n\e[?2004l\r"
+  - delay: 282
+    content: "                               ⠁ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 0s\r\n"
+  - delay: 108
+    content: "\e[1A\r\e[2K\e[1B\e[1A                 SequelizeMeta ⠁ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 0s\r\n"
+  - delay: 72
+    content: "\e[1A\r\e[2K\e[1B\e[1A                 SequelizeMeta ⠁ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 28s\r\n"
+  - delay: 70
+    content: "\e[1A\r\e[2K\e[1B\e[1A        accountingEventSources ⠉ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 22s\r\n"
+  - delay: 107
+    content: "\e[1A\r\e[2K\e[1B\e[1A              accountingEvents ⠉ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 16s\r\n"
+  - delay: 93
+    content: "\e[1A\r\e[2K\e[1B\e[1A                       apiKeys ⠉ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 14s\r\n"
+  - delay: 95
+    content: "\e[1A\r\e[2K\e[1B\e[1A                      appRoles ⠙ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 13s\r\n"
+  - delay: 210
+    content: "\e[1A\r\e[2K\e[1B\e[1A                authorizations ⠚ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 12s\r\n"
+  - delay: 232
+    content: "\e[1A\r\e[2K\e[1B\e[1A                authorizations ⠚ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 12s\r\n"
+  - delay: 252
+    content: "\e[1A\r\e[2K\e[1B\e[1A           complianceOverviews ⠒ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 12s\r\n"
+  - delay: 93
+    content: "\e[1A\r\e[2K\e[1B\e[1A            concurTransactions ⠂ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 12s\r\n"
+  - delay: 98
+    content: "\e[1A\r\e[2K\e[1B\e[1A          contactPersonMapping ⠂ ████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 84
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  customPeople ⠂ ████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 92
+    content: "\e[1A\r\e[2K\e[1B\e[1A             customerSuppliers ⠂ █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 85
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         deals ⠂ █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 78
+    content: "\e[1A\r\e[2K\e[1B\e[1A                   departments ⠒ █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 112
+    content: "\e[1A\r\e[2K\e[1B\e[1A         deviceLifeCycleEvents ⠒ ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 300
+    content: "\e[1A\r\e[2K\e[1B\e[1A                   emailEvents ⠴ ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 252
+    content: "\e[1A\r\e[2K\e[1B\e[1A                   emailEvents ⠤ ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 102
+    content: "\e[1A\r\e[2K\e[1B\e[1A              entityProperties ⠤ ███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 70
+    content: "\e[1A\r\e[2K\e[1B\e[1AentityPropertyTableViewColumns ⠤ ███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 75
+    content: "\e[1A\r\e[2K\e[1B\e[1A          entityPropertyValues ⠤ ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 133
+    content: "\e[1A\r\e[2K\e[1B\e[1A         expensifyTransactions ⠄ ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 127
+    content: "\e[1A\r\e[2K\e[1B\e[1A      externalAccountingEvents ⠄ ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A      externalAccountingEvents ⠤ ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A      externalAccountingEvents ⠠ ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 256
+    content: "\e[1A\r\e[2K\e[1B\e[1A      externalAccountingEvents ⠠ ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 255
+    content: "\e[1A\r\e[2K\e[1B\e[1A      externalAccountingEvents ⠤ ████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 89
+    content: "\e[1A\r\e[2K\e[1B\e[1A            gSuiteIntegrations ⠤ █████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 97
+    content: "\e[1A\r\e[2K\e[1B\e[1A                hardwareAssets ⠤ ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 117
+    content: "\e[1A\r\e[2K\e[1B\e[1A                      insights ⠦ ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 94
+    content: "\e[1A\r\e[2K\e[1B\e[1A              intacctGLEntries ⠦ ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 108
+    content: "\e[1A\r\e[2K\e[1B\e[1A    intacctTransactionsRulings ⠖ ███████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 105
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  integrations ⠖ ███████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 150
+    content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠒ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 171
+    content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠒ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 80
+    content: "\e[1A\r\e[2K\e[1B\e[1A microsoft365ActiveUserDetails ⠐ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 99
+    content: "\e[1A\r\e[2K\e[1B\e[1A            netsuiteCurrencies ⠐ █████████████░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 155
+    content: "\e[1A\r\e[2K\e[1B\e[1A             netsuitePurchases ⠐ █████████████░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
+  - delay: 176
+    content: "\e[1A\r\e[2K\e[1B\e[1A      netsuitePurchasesRulings ⠐ █████████████░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 79
+    content: "\e[1A\r\e[2K\e[1B\e[1A                 organizations ⠒ ██████████████░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 107
+    content: "\e[1A\r\e[2K\e[1B\e[1A    overrideSubscriptionEvents ⠒ ██████████████░░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 133
+    content: "\e[1A\r\e[2K\e[1B\e[1A                        people ⠒ ███████████████░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 173
+    content: "\e[1A\r\e[2K\e[1B\e[1A                   peopleTeams ⠓ ███████████████░░░░░░░░░░░░░░░░░░░░░░░░ eta 10s\r\n"
+  - delay: 255
+    content: "\e[1A\r\e[2K\e[1B\e[1A            personProductFacts ⠈ ████████████████░░░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A            personProductFacts ⠁ ████████████████░░░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 210
+    content: "\e[1A\r\e[2K\e[1B\e[1A            personProductFacts ⠁ █████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 115
+    content: "\e[1A\r\e[2K\e[1B\e[1ApersonProductUnintendedStatusOverrides ⠁ █████████████░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 68
+    content: "\e[1A\r\e[2K\e[1B\e[1A                 plaidAccounts ⠁ █████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 115
+    content: "\e[1A\r\e[2K\e[1B\e[1A             plaidTransactions ⠉ █████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 254
+    content: "\e[1A\r\e[2K\e[1B\e[1A             plaidTransactions ⠙ █████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 255
+    content: "\e[1A\r\e[2K\e[1B\e[1A             plaidTransactions ⠚ █████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 254
+    content: "\e[1A\r\e[2K\e[1B\e[1A             plaidTransactions ⠒ █████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 223
+    content: "\e[1A\r\e[2K\e[1B\e[1A             plaidTransactions ⠒ █████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 197
+    content: "\e[1A\r\e[2K\e[1B\e[1A      plaidTransactionsRulings ⠂ ██████████████████░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 86
+    content: "\e[1A\r\e[2K\e[1B\e[1A                      policies ⠂ ██████████████████░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 111
+    content: "\e[1A\r\e[2K\e[1B\e[1A                policiesPeople ⠂ ██████████████████░░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 142
+    content: "\e[1A\r\e[2K\e[1B\e[1A             productCategories ⠒ ███████████████████░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 91
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  productFiles ⠒ ███████████████████░░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 116
+    content: "\e[1A\r\e[2K\e[1B\e[1A               productLicenses ⠒ ████████████████████░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 103
+    content: "\e[1A\r\e[2K\e[1B\e[1A          productRelationships ⠲ ████████████████████░░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 243
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  productTeams ⠴ █████████████████████░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 310
+    content: "\e[1A\r\e[2K\e[1B\e[1A                      products ⠄ █████████████████████░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 240
+    content: "\e[1A\r\e[2K\e[1B\e[1A                      products ⠄ █████████████████████░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 185
+    content: "\e[1A\r\e[2K\e[1B\e[1A              projectTemplates ⠄ █████████████████████░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 83
+    content: "\e[1A\r\e[2K\e[1B\e[1A                      projects ⠤ █████████████████████░░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 76
+    content: "\e[1A\r\e[2K\e[1B\e[1A                      projects ⠤ ██████████████████████░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 179
+    content: "\e[1A\r\e[2K\e[1B\e[1A    quickbooksPurchasesRulings ⠠ ██████████████████████░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 254
+    content: "\e[1A\r\e[2K\e[1B\e[1A    quickbooksPurchasesRulings ⠠ ██████████████████████░░░░░░░░░░░░░░░░░░ eta 9s\r\n"
+  - delay: 105
+    content: "\e[1A\r\e[2K\e[1B\e[1A    requestTicketTemplateTeams ⠠ ██████████████████████░░░░░░░░░░░░░░░░░░ eta 8s\r\n"
+  - delay: 75
+    content: "\e[1A\r\e[2K\e[1B\e[1A        requestTicketTemplates ⠠ ███████████████████████░░░░░░░░░░░░░░░░░ eta 8s\r\n"
+  - delay: 75
+    content: "\e[1A\r\e[2K\e[1B\e[1A                requestTickets ⠤ ███████████████████████░░░░░░░░░░░░░░░░░ eta 8s\r\n"
+  - delay: 78
+    content: "\e[1A\r\e[2K\e[1B\e[1A                requestTickets ⠤ ███████████████████████░░░░░░░░░░░░░░░░░ eta 8s\r\n"
+  - delay: 68
+    content: "\e[1A\r\e[2K\e[1B\e[1A          requestTicketsNewApp ⠦ ███████████████████████░░░░░░░░░░░░░░░░░ eta 8s\r\n"
+  - delay: 70
+    content: "\e[1A\r\e[2K\e[1B\e[1A          requestTicketsSimple ⠦ ████████████████████████░░░░░░░░░░░░░░░░ eta 8s\r\n"
+  - delay: 141
+    content: "\e[1A\r\e[2K\e[1B\e[1A    requestTicketsSimpleCustom ⠦ ████████████████████████░░░░░░░░░░░░░░░░ eta 8s\r\n"
+  - delay: 102
+    content: "\e[1A\r\e[2K\e[1B\e[1A         sessionExchangeTokens ⠖ █████████████████████████░░░░░░░░░░░░░░░ eta 8s\r\n"
+  - delay: 196
+    content: "\e[1A\r\e[2K\e[1B\e[1A                 subscriptions ⠒ █████████████████████████░░░░░░░░░░░░░░░ eta 8s\r\n"
+  - delay: 143
+    content: "\e[1A\r\e[2K\e[1B\e[1A                 surveyResults ⠒ █████████████████████████░░░░░░░░░░░░░░░ eta 7s\r\n"
+  - delay: 112
+    content: "\e[1A\r\e[2K\e[1B\e[1A          surveySectionResults ⠐ █████████████████████████░░░░░░░░░░░░░░░ eta 7s\r\n"
+  - delay: 254
+    content: "\e[1A\r\e[2K\e[1B\e[1A          surveySectionResults ⠐ █████████████████████████░░░░░░░░░░░░░░░ eta 7s\r\n"
+  - delay: 114
+    content: "\e[1A\r\e[2K\e[1B\e[1A                surveySections ⠐ ██████████████████████████░░░░░░░░░░░░░░ eta 7s\r\n"
+  - delay: 70
+    content: "\e[1A\r\e[2K\e[1B\e[1A                       surveys ⠐ ██████████████████████████░░░░░░░░░░░░░░ eta 7s\r\n"
+  - delay: 69
+    content: "\e[1A\r\e[2K\e[1B\e[1A              tableViewColumns ⠒ ██████████████████████████░░░░░░░░░░░░░░ eta 7s\r\n"
+  - delay: 101
+    content: "\e[1A\r\e[2K\e[1B\e[1A              tableViewColumns ⠒ ██████████████████████████░░░░░░░░░░░░░░ eta 7s\r\n"
+  - delay: 138
+    content: "\e[1A\r\e[2K\e[1B\e[1A                    tableViews ⠒ ███████████████████████████░░░░░░░░░░░░░ eta 7s\r\n"
+  - delay: 226
+    content: "\e[1A\r\e[2K\e[1B\e[1A              taskDependencies ⠓ ███████████████████████████░░░░░░░░░░░░░ eta 6s\r\n"
+  - delay: 128
+    content: "\e[1A\r\e[2K\e[1B\e[1A                     taskLinks ⠋ ███████████████████████████░░░░░░░░░░░░░ eta 6s\r\n"
+  - delay: 75
+    content: "\e[1A\r\e[2K\e[1B\e[1A      taskTemplateDependencies ⠋ ████████████████████████████░░░░░░░░░░░░ eta 6s\r\n"
+  - delay: 90
+    content: "\e[1A\r\e[2K\e[1B\e[1A                 taskTemplates ⠉ ████████████████████████████░░░░░░░░░░░░ eta 6s\r\n"
+  - delay: 252
+    content: "\e[1A\r\e[2K\e[1B\e[1A                 taskTemplates ⠈ ████████████████████████████░░░░░░░░░░░░ eta 6s\r\n"
+  - delay: 77
+    content: "\e[1A\r\e[2K\e[1B\e[1A      taskTemplatesDeprovision ⠈ ████████████████████████████░░░░░░░░░░░░ eta 6s\r\n"
+  - delay: 122
+    content: "\e[1A\r\e[2K\e[1B\e[1A        taskTemplatesProvision ⠈ █████████████████████████████░░░░░░░░░░░ eta 5s\r\n"
+  - delay: 121
+    content: "\e[1A\r\e[2K\e[1B\e[1A           taskTemplatesSimple ⠈ █████████████████████████████░░░░░░░░░░░ eta 5s\r\n"
+  - delay: 67
+    content: "\e[1A\r\e[2K\e[1B\e[1A          taskTemplatesWebhook ⠁ █████████████████████████████░░░░░░░░░░░ eta 5s\r\n"
+  - delay: 79
+    content: "\e[1A\r\e[2K\e[1B\e[1A          taskTemplatesWebhook ⠁ ██████████████████████████████░░░░░░░░░░ eta 5s\r\n"
+  - delay: 177
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         tasks ⠁ ██████████████████████████████░░░░░░░░░░ eta 5s\r\n"
+  - delay: 256
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         tasks ⠉ ██████████████████████████████░░░░░░░░░░ eta 5s\r\n"
+  - delay: 255
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         tasks ⠙ ██████████████████████████████░░░░░░░░░░ eta 5s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         tasks ⠚ ██████████████████████████████░░░░░░░░░░ eta 5s\r\n"
+  - delay: 251
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         tasks ⠒ ██████████████████████████████░░░░░░░░░░ eta 5s\r\n"
+  - delay: 255
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         tasks ⠂ ██████████████████████████████░░░░░░░░░░ eta 5s\r\n"
+  - delay: 252
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         tasks ⠂ ██████████████████████████████░░░░░░░░░░ eta 5s\r\n"
+  - delay: 103
+    content: "\e[1A\r\e[2K\e[1B\e[1A        teamLicenseAllocations ⠂ ██████████████████████████████░░░░░░░░░░ eta 5s\r\n"
+  - delay: 149
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         teams ⠂ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 84
+    content: "\e[1A\r\e[2K\e[1B\e[1A    transactionAppMatcherRules ⠒ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 90
+    content: "\e[1A\r\e[2K\e[1B\e[1AtransactionAppMatcherRulesGlobal ⠒ ██████████████████████████████░░░░░░░░ eta 5s\r\n"
+  - delay: 83
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠲ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠴ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠤ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 252
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠄ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠄ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 254
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠤ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠠ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠠ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 254
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠤ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 254
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  transactions ⠦ ███████████████████████████████░░░░░░░░░ eta 5s\r\n"
+  - delay: 100
+    content: "\e[1A\r\e[2K\e[1B\e[1A              ugcSubscriptions ⠦ ████████████████████████████████░░░░░░░░ eta 4s\r\n"
+  - delay: 88
+    content: "\e[1A\r\e[2K\e[1B\e[1A          ugcTransactionEvents ⠦ ████████████████████████████████░░░░░░░░ eta 4s\r\n"
+  - delay: 67
+    content: "\e[1A\r\e[2K\e[1B\e[1A                 uploadedFiles ⠖ ████████████████████████████████░░░░░░░░ eta 4s\r\n"
+  - delay: 255
+    content: "\e[1A\r\e[2K\e[1B\e[1A          uploadedTransactions ⠒ ████████████████████████████████░░░░░░░░ eta 4s\r\n"
+  - delay: 253
+    content: "\e[1A\r\e[2K\e[1B\e[1A          uploadedTransactions ⠐ ████████████████████████████████░░░░░░░░ eta 4s\r\n"
+  - delay: 254
+    content: "\e[1A\r\e[2K\e[1B\e[1A          uploadedTransactions ⠐ ████████████████████████████████░░░░░░░░ eta 4s\r\n"
+  - delay: 255
+    content: "\e[1A\r\e[2K\e[1B\e[1A          uploadedTransactions ⠒ ████████████████████████████████░░░░░░░░ eta 4s\r\n"
+  - delay: 101
+    content: "\e[1A\r\e[2K\e[1B\e[1A          uploadedTransactions ⠒ ████████████████████████████████░░░░░░░░ eta 4s\r\n"
+  - delay: 152
+    content: "\e[1A\r\e[2K\e[1B\e[1A   uploadedTransactionsRulings ⠓ █████████████████████████████████░░░░░░░ eta 4s\r\n"
+  - delay: 115
+    content: "\e[1A\r\e[2K\e[1B\e[1A   uploadedTransactionsRulings ⠓ █████████████████████████████████░░░░░░░ eta 4s\r\n"
+  - delay: 88
+    content: "\e[1A\r\e[2K\e[1B\e[1A                         users ⠓ █████████████████████████████████░░░░░░░ eta 4s\r\n"
+  - delay: 124
+    content: "\e[1A\r\e[2K\e[1B\e[1A    workflowTemplatesAppAccess ⠋ ██████████████████████████████████░░░░░░ eta 4s\r\n"
+  - delay: 108
+    content: "\e[1A\r\e[2K\e[1B\e[1A  workflowTemplatesOffboarding ⠋ ██████████████████████████████████░░░░░░ eta 3s\r\n"
+  - delay: 73
+    content: "\e[1A\r\e[2K\e[1B\e[1A   workflowTemplatesOnboarding ⠉ ██████████████████████████████████░░░░░░ eta 3s\r\n"
+  - delay: 79
+    content: "\e[1A\r\e[2K\e[1B\e[1A       workflowTemplatesSimple ⠉ ███████████████████████████████████░░░░░ eta 3s\r\n"
+  - delay: 90
+    content: "\e[1A\r\e[2K\e[1B\e[1A workflowTemplatesSimplePerson ⠉ ███████████████████████████████████░░░░░ eta 3s\r\n"
+  - delay: 86
+    content: "\e[1A\r\e[2K\e[1B\e[1AworkflowTemplatesVendorApproval ⠈ ██████████████████████████████████░░░░░ eta 3s\r\n"
+  - delay: 80
+    content: "\e[1A\r\e[2K\e[1B\e[1A            workflowsAppAccess ⠈ ████████████████████████████████████░░░░ eta 2s\r\n"
+  - delay: 83
+    content: "\e[1A\r\e[2K\e[1B\e[1A          workflowsOffboarding ⠈ ████████████████████████████████████░░░░ eta 2s\r\n"
+  - delay: 84
+    content: "\e[1A\r\e[2K\e[1B\e[1A           workflowsOnboarding ⠈ ████████████████████████████████████░░░░ eta 2s\r\n"
+  - delay: 69
+    content: "\e[1A\r\e[2K\e[1B\e[1A            workflowsSimpleApp ⠈ █████████████████████████████████████░░░ eta 2s\r\n"
+  - delay: 115
+    content: "\e[1A\r\e[2K\e[1B\e[1A           workflowsSimpleTeam ⠈ █████████████████████████████████████░░░ eta 2s\r\n"
+  - delay: 68
+    content: "\e[1A\r\e[2K\e[1B\e[1A       workflowsVendorApproval ⠈ █████████████████████████████████████░░░ eta 1s\r\n"
+  - delay: 72
+    content: "\e[1A\r\e[2K\e[1B\e[1A        workflowsVendorRenewal ⠁ ██████████████████████████████████████░░ eta 1s\r\n"
+  - delay: 190
+    content: "\e[1A\r\e[2K\e[1B\e[1A   xeroBankTransactionsRulings ⠁ ██████████████████████████████████████░░ eta 1s\r\n"
+  - delay: 252
+    content: "\e[1A\r\e[2K\e[1B\e[1A   xeroBankTransactionsRulings ⠉ ██████████████████████████████████████░░ eta 1s\r\n"
+  - delay: 151
+    content: "\e[1A\r\e[2K\e[1B\e[1A   xeroBankTransactionsRulings ⠉ ██████████████████████████████████████░░ eta 1s\r\n"
+  - delay: 99
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  xeroContacts ⠙ ██████████████████████████████████████░░ eta 1s\r\n"
+  - delay: 255
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  xeroContacts ⠚ ██████████████████████████████████████░░ eta 1s\r\n"
+  - delay: 156
+    content: "\e[1A\r\e[2K\e[1B\e[1A                  xeroContacts ⠚ ███████████████████████████████████████░ eta 1s\r\n"
+  - delay: 99
+    content: "\e[1A\r\e[2K\e[1B\e[1A               zendeskLicenses ⠒ ███████████████████████████████████████░ eta 1s\r\n"
+  - delay: 49
+    content: "\e[1A\r\e[2K\e[1B\e[1A             Dumped 152 tables   ████████████████████████████████████████ eta 0s\r\n"
+  - delay: 34
+    content: "\e]0; pg_parcel \a"
+  - delay: 58
+    content: "\e[?2004h\r\n\e[1;36mpg_parcel\e[0m on \e[1;35m \e[0m\e[1;35mmain\e[0m \e[1;31m[\e[0m\e[1;31m!\e[0m\e[1;31m?\e[0m\e[1;31m]\e[0m is \e[1;38;5;208m\U0001F4E6 \e[0m\e[1;38;5;208mv0.2.2\e[0m via \e[1;31m\U0001F980 \e[0m\e[1;31mv1.58.1\e[0m\e[1;31m \e[0mtook \e[1;33m23s\e[0m \r\n\e[1;32m❯\e[0m "
+  - delay: 1584
+    content: "\e[?2004l\r\r\nlogout\r\n"
+  - delay: 15
+    content: "\r\nSaving session..."
+  - delay: 24
+    content: "completed.\r\n"

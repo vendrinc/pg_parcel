@@ -1,2 +1,4 @@
 /target
 Brewfile.lock.json
+pg_parcel.toml
+*.sql

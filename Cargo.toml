@@ -1,11 +1,12 @@
 [package]
-name = "pgslice"
+name = "pg_parcel"
 description = "Dump horizontal slices from PostgreSQL schemas"
 authors = ["Jacob Elder <jacob.elder@vendr.com>"]
-version = "0.1.1"
+version = "0.2.1"
 edition = "2021"
-repository = "https://github.com/Blissfully/pgslice"
+repository = "https://github.com/Blissfully/pg_parcel"
 publish = false
+exclude = ["screenshots/*"]
 
 [dependencies]
 postgres = "0.19.2"
@@ -13,3 +14,7 @@ lazy_static = "1.4.0"
 dialoguer = "0.10.0"
 indicatif = "0.16.2"
 clap = { version = "3.1.5", features = ["derive"] }
+toml = "0.5.8"
+serde = "1.0"
+serde_derive = "1.0.136"
+regex = "1"
