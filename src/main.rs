@@ -1,4 +1,4 @@
-use indicatif::*;
+use indicatif::{ProgressBar, ProgressStyle};
 use postgres::{Client, NoTls};
 use std::collections::HashMap;
 use std::error::Error;
@@ -8,24 +8,15 @@ static DATABASE_URL: &str = "postgres://localhost:15432/postgres";
 
 static SCHEMA: &str = "saasdash";
 
-static REFLECT_COLUMNS_QUERY: &str = r#"
+static REFLECT_QUERY: &str = r#"
     select
         table_name,
         column_name,
         case is_nullable when 'YES' then True else False end as is_nullable,
-        ordinal_position,
-        pg_relation_size(quote_ident(table_name)) as table_size
+        ordinal_position
     from information_schema.columns
     where table_schema = 'saasdash'
     order by table_name, ordinal_position;
-"#;
-
-static REFLECT_TABLES_QUERY: &str = r#"
-    select
-        table_name,
-        pg_relation_size(quote_ident(table_name)) as table_size
-    from information_schema.tables
-    where table_schema = 'saasdash'
 "#;
 
 static PARTITION_COLUMN: &str = "OrganizationId";
@@ -44,14 +35,18 @@ fn try_main() -> Result<(), Box<dyn Error>> {
     let mut copy_client = Client::connect(DATABASE_URL, NoTls)?;
 
     let tables = get_tables(client)?;
-    let pb = ProgressBar::new(tables.iter().fold(0, |acc, table| acc + table.size) as u64);
+    let pb = ProgressBar::new(tables.len() as u64);
+    pb.set_style(
+        ProgressStyle::default_bar().template("{msg} {spinner} {wide_bar:blue} eta {eta}"),
+    );
+    pb.enable_steady_tick(250);
 
     for table in tables.iter() {
         let copy_statement = format!(
             r#"COPY ({}) TO stdout;"#,
             table.copy_out_query(PARTITION_VALUE)
         );
-        pb.println(format!("Dumping {} ({} bytes)", &table.name, table.size));
+        pb.set_message(format!("{:>30}", table.name));
         let mut reader = copy_client.copy_out(&copy_statement)?;
         let mut buf = vec![];
         reader.read_to_end(&mut buf)?;
@@ -60,8 +55,9 @@ fn try_main() -> Result<(), Box<dyn Error>> {
         println!("{};", table.copy_in_query());
         println!("{}\\.", std::str::from_utf8(&buf)?);
         println!("COMMIT;");
-        pb.inc(table.size as u64);
+        pb.inc(1);
     }
+    pb.finish_with_message(format!("Dumped {} tables", tables.len()));
 
     Ok(())
 }
@@ -70,7 +66,6 @@ fn try_main() -> Result<(), Box<dyn Error>> {
 struct Table {
     name: String,
     columns: Vec<Column>,
-    size: i64,
 }
 
 impl Table {
@@ -88,9 +83,9 @@ impl Table {
                     PARTITION_VALUE,
                 )
             }
-            // "dailyExchangeRates" => {
-            //     self.default_copy_out_query(partition_column_value) + " where True = False"
-            // }
+            "dailyExchangeRates" => {
+                self.default_copy_out_query(partition_column_value) + " where True = False"
+            }
             _ => self.default_copy_out_query(partition_column_value),
         };
         query
@@ -109,7 +104,7 @@ impl Table {
             }
             query = format!("{query} where {where_clause}");
         }
-        query = format!("{query} limit 10");
+        // query = format!("{query} limit 10");
         query
     }
     fn copy_in_query(&self) -> String {
@@ -149,18 +144,8 @@ impl Column {
 }
 
 fn get_tables(mut client: Client) -> Result<Vec<Table>, Box<dyn Error>> {
-    let table_sizes = client.query(REFLECT_TABLES_QUERY, &[])?.into_iter().fold(
-        HashMap::new(),
-        |mut acc: HashMap<String, i64>, row| {
-            let table_name: &str = row.get("table_name");
-            let table_size: i64 = row.get("table_size");
-
-            acc.insert(table_name.to_owned(), table_size);
-            acc
-        },
-    );
     let mut tables: Vec<Table> = client
-        .query(REFLECT_COLUMNS_QUERY, &[])?
+        .query(REFLECT_QUERY, &[])?
         .into_iter()
         .fold(
             HashMap::new(),
@@ -182,12 +167,7 @@ fn get_tables(mut client: Client) -> Result<Vec<Table>, Box<dyn Error>> {
         .into_iter()
         .map(|(name, mut columns)| {
             columns.sort_by(|a, b| a.position.cmp(&b.position));
-            let size = table_sizes.get(&name).cloned().unwrap_or(0);
-            let table = Table {
-                name,
-                columns,
-                size,
-            };
+            let table = Table { name, columns };
             table
         })
         .collect();
