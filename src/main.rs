@@ -56,11 +56,8 @@ fn try_main(args: &Args) -> Result<(), Box<dyn Error>> {
         let mut reader = copy_client.copy_out(&copy_statement)?;
         let mut buf = vec![];
         reader.read_to_end(&mut buf)?;
-        println!("BEGIN;");
-        println!(r#"TRUNCATE TABLE {}."{}";"#, SCHEMA, table.name);
         println!("{};", table.copy_in_query());
         println!("{}\\.", std::str::from_utf8(&buf)?);
-        println!("COMMIT;");
         pb.inc(1);
     }
     pb.finish_with_message(format!("Dumped {} tables", tables.len()));
