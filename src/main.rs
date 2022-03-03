@@ -13,13 +13,13 @@ mod sql_string;
 use sql_string::SqlString;
 
 mod inputfile;
+use inputfile::InputFile;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 /// Command line arguments
 struct Args {
     #[clap(short, long)]
-    #[clap(default_value_t = String::from("19653bc3-57f4-429e-902f-bc04b0fca4dc"))]
     id: String,
 
     #[clap(short, long)]
@@ -40,7 +40,7 @@ struct Options {
 impl Options {
     pub fn load() -> Result<Options, Box<dyn Error>> {
         let args = Args::parse();
-        let file = inputfile::load(Path::new(&args.file))?;
+        let file = InputFile::load(Path::new(&args.file))?;
         let options = Options {
             column_name: file.column_name,
             column_value: args.id,

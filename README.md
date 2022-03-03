@@ -5,16 +5,17 @@ A solution to: https://postgrespro.com/list/thread-id/1715772
 It's like a very minimal subset `pg_dump`, but with the addition of `mysqldump`'s `--where` option.
 
 ```
+pg_parcel 0.1.3
 Jacob Elder <jacob.elder@vendr.com>
 Dump horizontal slices from PostgreSQL schemas
 
 USAGE:
-    pg_parcel [OPTIONS]
+    pg_parcel [OPTIONS] --id <ID>
 
 OPTIONS:
     -f, --file <FILE>    [default: ./pg_parcel.toml]
     -h, --help           Print help information
-    -i, --id <ID>        [default: 19653bc3-57f4-429e-902f-bc04b0fca4dc]
+    -i, --id <ID>
     -V, --version        Print version information
 ```
 
