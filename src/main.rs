@@ -5,6 +5,9 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::io::Read;
 
+mod sql_string;
+use sql_string::SqlString;
+
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
@@ -42,7 +45,7 @@ fn try_main(args: &Args) -> Result<(), Box<dyn Error>> {
     let mut client = Client::connect(&args.database_url, NoTls)?;
 
     for table in tables.iter() {
-        let copy_statement = format!(r#"COPY ({}) TO stdout;"#, table.copy_out_query(args));
+        let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(args));
         pb.set_message(format!("{:>30}", table.name));
         let mut reader = client.copy_out(&copy_statement)?;
         let mut buf = vec![];
@@ -56,7 +59,6 @@ fn try_main(args: &Args) -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
-
 #[derive(Debug, Clone)]
 struct Table {
     name: String,
@@ -73,11 +75,11 @@ impl Table {
                         select {} from "googleAuthPermissions"
                         join "googleAuthTokens" on "googleAuthTokenId" = "googleAuthTokens".id
                         join "directoryUsers" on "GoogleUserId" = "directoryUsers"."externalId"
-                        where "directoryUsers"."{}" = '{}'
+                        where "directoryUsers".{} = {}
                     "#,
                     &self.column_list_qualified(),
-                    args.column,
-                    args.id,
+                    args.column.sql_identifier(),
+                    args.id.sql_value(),
                 )
             }
             "dailyExchangeRates" => self.default_copy_out_query(args) + " where True = False",
@@ -87,18 +89,25 @@ impl Table {
     }
 
     fn default_copy_out_query(&self, args: &Args) -> String {
-        let mut query = format!(r#"select {} from "{}""#, &self.column_list(), &self.name);
+        let mut query = format!(
+            "select {} from {}",
+            &self.column_list(),
+            &self.name.sql_identifier()
+        );
         if let Some(org_scope) = self
             .columns
             .iter()
             .find(|column| column.name == args.column)
         {
-            let mut where_clause =
-                format!(r#""{column}" = '{id}'"#, column = args.column, id = args.id);
+            let mut where_clause = format!(
+                "{column} = {id}",
+                column = args.column.sql_identifier(),
+                id = args.id.sql_value()
+            );
             if org_scope.is_nullable {
                 where_clause = format!(
-                    r#"({where_clause} or "{column}" is null)"#,
-                    column = args.column
+                    "({where_clause} or {column} is null)",
+                    column = args.column.sql_identifier()
                 )
             }
             query = format!("{query} where {where_clause}");
@@ -108,23 +117,23 @@ impl Table {
     }
     fn copy_in_query(&self) -> String {
         format!(
-            r#"COPY {schema}."{name}" ({columns}) FROM stdin"#,
-            schema = self.schema,
-            name = self.name,
+            "COPY {schema}.{name} ({columns}) FROM stdin",
+            schema = self.schema.sql_identifier(),
+            name = self.name.sql_identifier(),
             columns = self.column_list()
         )
     }
     fn column_list(&self) -> String {
         self.columns
             .iter()
-            .map(|column| column.quoted_name())
+            .map(|column| column.name.sql_identifier())
             .collect::<Vec<String>>()
             .join(", ")
     }
     fn column_list_qualified(&self) -> String {
         self.columns
             .iter()
-            .map(|column| format!(r#""{}".{}"#, self.name, column.quoted_name()))
+            .map(|column| format!("{}.{}", self.name, column.name.sql_identifier()))
             .collect::<Vec<String>>()
             .join(", ")
     }
@@ -137,12 +146,6 @@ struct Column {
     pub position: i32,
 }
 
-impl Column {
-    fn quoted_name(&self) -> String {
-        format!("\"{}\"", self.name)
-    }
-}
-
 fn get_tables(args: &Args) -> Result<Vec<Table>, Box<dyn Error>> {
     let mut client = Client::connect(&args.database_url, NoTls)?;
     let query = format!(
@@ -153,10 +156,10 @@ fn get_tables(args: &Args) -> Result<Vec<Table>, Box<dyn Error>> {
             case is_nullable when 'YES' then True else False end as is_nullable,
             ordinal_position
         from information_schema.columns
-        where table_schema = '{schema}'
+        where table_schema = {schema}
         order by table_name, ordinal_position;
     "#,
-        schema = args.schema,
+        schema = args.schema.sql_value(),
     );
     let mut tables: Vec<Table> = client
         .query(&query, &[])?
