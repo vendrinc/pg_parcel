@@ -1,37 +1,61 @@
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
+use lazy_static::lazy_static;
 use postgres::{Client, NoTls};
+use regex::Regex;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::error::Error;
 use std::io::Read;
+use std::path::Path;
+
+mod sql_string;
+use sql_string::SqlString;
+
+mod slicefile;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
+/// Command line arguments
 struct Args {
     #[clap(short, long)]
     #[clap(default_value_t = String::from("19653bc3-57f4-429e-902f-bc04b0fca4dc"))]
     id: String,
 
     #[clap(short, long)]
-    #[clap(default_value_t = String::from("OrganizationId"))]
-    column: String,
+    #[clap(default_value_t = String::from("./slicefile.toml"))]
+    file: String,
+}
 
-    #[clap(short, long)]
-    #[clap(default_value_t = String::from("saasdash"))]
+/// Options here is a combination of command line arguments and contents of the slicefile.
+struct Options {
+    column_name: String,
+    column_value: String,
     schema: String,
-
-    #[clap(short, long)]
-    #[clap(default_value_t = String::from("postgres://localhost:15432/postgres"))]
     database_url: String,
+    skip_tables: HashSet<String>,
+    overrides: HashMap<String, String>,
 }
 
-fn main() {
-    let args = Args::parse();
-    try_main(&args).unwrap();
+impl Options {
+    pub fn load() -> Result<Options, Box<dyn Error>> {
+        let args = Args::parse();
+        let file = slicefile::load(Path::new(&args.file))?;
+        let options = Options {
+            column_name: file.column_name,
+            column_value: args.id,
+            database_url: file.database_url,
+            schema: file.schema_name,
+            skip_tables: file.skip_tables.unwrap_or(HashSet::new()),
+            overrides: file.overrides.unwrap_or(HashMap::new()),
+        };
+        Ok(options)
+    }
 }
 
-fn try_main(args: &Args) -> Result<(), Box<dyn Error>> {
-    let tables = get_tables(args)?;
+fn main() -> Result<(), Box<dyn Error>> {
+    let options = Options::load()?;
+    let tables = get_tables(&options)?;
 
     let pb = ProgressBar::new(tables.len() as u64);
     pb.set_style(
@@ -39,10 +63,10 @@ fn try_main(args: &Args) -> Result<(), Box<dyn Error>> {
     );
     pb.enable_steady_tick(250);
 
-    let mut client = Client::connect(&args.database_url, NoTls)?;
+    let mut client = Client::connect(&options.database_url, NoTls)?;
 
     for table in tables.iter() {
-        let copy_statement = format!(r#"COPY ({}) TO stdout;"#, table.copy_out_query(args));
+        let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
         pb.set_message(format!("{:>30}", table.name));
         let mut reader = client.copy_out(&copy_statement)?;
         let mut buf = vec![];
@@ -56,7 +80,6 @@ fn try_main(args: &Args) -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
-
 #[derive(Debug, Clone)]
 struct Table {
     name: String,
@@ -65,40 +88,36 @@ struct Table {
 }
 
 impl Table {
-    fn copy_out_query(&self, args: &Args) -> String {
-        let query = match self.name.as_str() {
-            "googleAuthPermissions" => {
-                format!(
-                    r#"
-                        select {} from "googleAuthPermissions"
-                        join "googleAuthTokens" on "googleAuthTokenId" = "googleAuthTokens".id
-                        join "directoryUsers" on "GoogleUserId" = "directoryUsers"."externalId"
-                        where "directoryUsers"."{}" = '{}'
-                    "#,
-                    &self.column_list_qualified(),
-                    args.column,
-                    args.id,
-                )
+    fn copy_out_query(&self, options: &Options) -> String {
+        if let Some(query) = options.overrides.get(&self.name) {
+            lazy_static! {
+                static ref RE: Regex = Regex::new(":id").unwrap();
             }
-            "dailyExchangeRates" => self.default_copy_out_query(args) + " where True = False",
-            _ => self.default_copy_out_query(args),
-        };
-        query
-    }
-
-    fn default_copy_out_query(&self, args: &Args) -> String {
-        let mut query = format!(r#"select {} from "{}""#, &self.column_list(), &self.name);
+            let query = RE
+                .replace_all(query, &options.column_value.sql_value())
+                .to_string();
+            eprintln!("{query}");
+            return query;
+        }
+        let mut query = format!(
+            "select {} from {}",
+            &self.column_list(),
+            &self.name.sql_identifier()
+        );
         if let Some(org_scope) = self
             .columns
             .iter()
-            .find(|column| column.name == args.column)
+            .find(|column| column.name == options.column_name)
         {
-            let mut where_clause =
-                format!(r#""{column}" = '{id}'"#, column = args.column, id = args.id);
+            let mut where_clause = format!(
+                "{column} = {id}",
+                column = options.column_name.sql_identifier(),
+                id = options.column_value.sql_value()
+            );
             if org_scope.is_nullable {
                 where_clause = format!(
-                    r#"({where_clause} or "{column}" is null)"#,
-                    column = args.column
+                    "({where_clause} or {column} is null)",
+                    column = options.column_name.sql_identifier()
                 )
             }
             query = format!("{query} where {where_clause}");
@@ -108,23 +127,16 @@ impl Table {
     }
     fn copy_in_query(&self) -> String {
         format!(
-            r#"COPY {schema}."{name}" ({columns}) FROM stdin"#,
-            schema = self.schema,
-            name = self.name,
+            "COPY {schema}.{name} ({columns}) FROM stdin",
+            schema = self.schema.sql_identifier(),
+            name = self.name.sql_identifier(),
             columns = self.column_list()
         )
     }
     fn column_list(&self) -> String {
         self.columns
             .iter()
-            .map(|column| column.quoted_name())
-            .collect::<Vec<String>>()
-            .join(", ")
-    }
-    fn column_list_qualified(&self) -> String {
-        self.columns
-            .iter()
-            .map(|column| format!(r#""{}".{}"#, self.name, column.quoted_name()))
+            .map(|column| column.name.sql_identifier())
             .collect::<Vec<String>>()
             .join(", ")
     }
@@ -137,14 +149,8 @@ struct Column {
     pub position: i32,
 }
 
-impl Column {
-    fn quoted_name(&self) -> String {
-        format!("\"{}\"", self.name)
-    }
-}
-
-fn get_tables(args: &Args) -> Result<Vec<Table>, Box<dyn Error>> {
-    let mut client = Client::connect(&args.database_url, NoTls)?;
+fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
+    let mut client = Client::connect(&options.database_url, NoTls)?;
     let query = format!(
         r#"
         select
@@ -153,10 +159,10 @@ fn get_tables(args: &Args) -> Result<Vec<Table>, Box<dyn Error>> {
             case is_nullable when 'YES' then True else False end as is_nullable,
             ordinal_position
         from information_schema.columns
-        where table_schema = '{schema}'
+        where table_schema = {schema}
         order by table_name, ordinal_position;
     "#,
-        schema = args.schema,
+        schema = options.schema.sql_value(),
     );
     let mut tables: Vec<Table> = client
         .query(&query, &[])?
@@ -175,16 +181,17 @@ fn get_tables(args: &Args) -> Result<Vec<Table>, Box<dyn Error>> {
                 } else {
                     acc.insert(table_name.to_owned(), vec![column]);
                 }
-                return acc;
+                acc
             },
         )
         .into_iter()
+        .filter(|(name, ..)| !options.skip_tables.contains(name))
         .map(|(name, mut columns)| {
             columns.sort_by(|a, b| a.position.cmp(&b.position));
             let table = Table {
                 name,
                 columns,
-                schema: args.schema.to_owned(),
+                schema: options.schema.to_owned(),
             };
             table
         })
