@@ -1,0 +1,4 @@
+{
+  "todo-tree.regex.regex": "((//|#|<!--|;|/\\*|^)\\s*($TAGS)|($TAGS)!.*)",
+  "todo-tree.regex.regexCaseSensitive": false
+}
