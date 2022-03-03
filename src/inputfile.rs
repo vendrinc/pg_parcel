@@ -6,7 +6,6 @@ use std::fs;
 use std::path::Path;
 
 #[derive(Deserialize, Debug)]
-/// Slicefile is a way to set up a repeatable dump from a single database schema.
 pub struct InputFile {
     pub column_name: String,
     pub schema_name: String,
@@ -17,10 +16,8 @@ pub struct InputFile {
 
 impl InputFile {
     pub fn load(path: &Path) -> Result<InputFile, Box<dyn Error>> {
-        let slicefile_string =
-            fs::read_to_string(&path).expect("Need a pg_parcel.toml file to continue");
-        let slicefile: InputFile = toml::from_str(&slicefile_string)?;
-        println!("{:#?}", &slicefile);
-        Ok(slicefile)
+        let string = fs::read_to_string(&path).expect("Need a pg_parcel.toml file to continue");
+        let inputfile: InputFile = toml::from_str(&string)?;
+        Ok(inputfile)
     }
 }
