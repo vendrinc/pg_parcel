@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu -o pipefail
 
-version="0.1.3b"
+version="0.2.0"
 
 git tag "v${version}"
 git push
