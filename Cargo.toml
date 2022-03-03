@@ -1,10 +1,10 @@
 [package]
-name = "pgslice"
+name = "pg_parcel"
 description = "Dump horizontal slices from PostgreSQL schemas"
 authors = ["Jacob Elder <jacob.elder@vendr.com>"]
 version = "0.1.3"
 edition = "2021"
-repository = "https://github.com/Blissfully/pgslice"
+repository = "https://github.com/Blissfully/pg_parcel"
 publish = false
 
 [dependencies]

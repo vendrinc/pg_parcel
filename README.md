@@ -1,4 +1,4 @@
-# pgslice
+# pg_parcel
 
 A solution to: https://postgrespro.com/list/thread-id/1715772
 
@@ -9,16 +9,16 @@ Jacob Elder <jacob.elder@vendr.com>
 Dump horizontal slices from PostgreSQL schemas
 
 USAGE:
-    pgslice [OPTIONS]
+    pg_parcel [OPTIONS]
 
 OPTIONS:
-    -f, --file <FILE>    [default: ./slicefile.toml]
+    -f, --file <FILE>    [default: ./pg_parcel.toml]
     -h, --help           Print help information
     -i, --id <ID>        [default: 19653bc3-57f4-429e-902f-bc04b0fca4dc]
     -V, --version        Print version information
 ```
 
-Example slicefile:
+Example `pg_parcel.toml` file:
 
 ```toml
 column_name = "customer_id"

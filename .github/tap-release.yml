@@ -1,7 +1,7 @@
-asset: pgslice-apple-darwin
-tap: Blissfully/homebrew-tools/pgslice.rb
+asset: pg_parcel-apple-darwin
+tap: Blissfully/homebrew-tools/pg_parcel.rb
 template: >
-  class PGSlice < Formula
+  class pg_parcel < Formula
     desc     "$REPO_DESCRIPTION"
     homepage "$REPO_WEBITE"
     version  "$STABLE_VERSION"
@@ -9,6 +9,6 @@ template: >
     sha256   "$STABLE_ASSET_SHA256"
 
     def install
-      prefix.install "pgslice"
+      prefix.install "pg_parcel"
     end
   end

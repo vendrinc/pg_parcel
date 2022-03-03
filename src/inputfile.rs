@@ -16,7 +16,8 @@ pub struct Slicefile {
 }
 
 pub fn load(path: &Path) -> Result<Slicefile, Box<dyn Error>> {
-    let slicefile_string = fs::read_to_string(&path).expect("Need a slicefile.toml to continue");
+    let slicefile_string =
+        fs::read_to_string(&path).expect("Need a pg_parcel.toml file to continue");
     let slicefile: Slicefile = toml::from_str(&slicefile_string)?;
     println!("{:#?}", &slicefile);
     Ok(slicefile)

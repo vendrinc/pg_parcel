@@ -12,7 +12,7 @@ use std::path::Path;
 mod sql_string;
 use sql_string::SqlString;
 
-mod slicefile;
+mod inputfile;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -23,7 +23,7 @@ struct Args {
     id: String,
 
     #[clap(short, long)]
-    #[clap(default_value_t = String::from("./slicefile.toml"))]
+    #[clap(default_value_t = String::from("./pg_parcel.toml"))]
     file: String,
 }
 
@@ -40,7 +40,7 @@ struct Options {
 impl Options {
     pub fn load() -> Result<Options, Box<dyn Error>> {
         let args = Args::parse();
-        let file = slicefile::load(Path::new(&args.file))?;
+        let file = inputfile::load(Path::new(&args.file))?;
         let options = Options {
             column_name: file.column_name,
             column_value: args.id,
