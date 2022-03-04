@@ -1,19 +1,17 @@
+mod inputfile;
+mod sql_string;
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
+use inputfile::InputFile;
 use lazy_static::lazy_static;
 use postgres::{Client, NoTls};
 use regex::Regex;
+use sql_string::SqlString;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
 use std::io::Read;
 use std::path::Path;
-
-mod sql_string;
-use sql_string::SqlString;
-
-mod inputfile;
-use inputfile::InputFile;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
