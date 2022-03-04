@@ -4,7 +4,7 @@
 
 A solution to: https://postgrespro.com/list/thread-id/1715772
 
-It's like a very minimal subset `pg_dump`, but with the addition of `mysqldump`'s `--where` option.
+It's like a very minimal subset of `pg_dump`, but with the addition of `mysqldump`'s `--where` option.
 
 Most options are specified via config file.
 
