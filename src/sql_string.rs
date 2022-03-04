@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use regex::Regex;
 use std::collections::HashSet;
 
 pub trait SqlString {
@@ -27,6 +28,10 @@ fn needs_quoting(string: &str) -> bool {
         return true;
     }
 
+    if NOT_ALPHANUMERIC.is_match(string) {
+        return true;
+    }
+
     if POSTGRESQL_RESERVED_WORDS.contains(&lower) {
         return true;
     }
@@ -52,9 +57,16 @@ mod tests {
     fn it_quotes_reserved_words() {
         assert_eq!("action".to_string().sql_identifier(), "\"action\"")
     }
+
+    #[test]
+    fn it_quotes_terrible_names() {
+        assert_eq!("my data".to_string().sql_identifier(), "\"my data\"")
+    }
 }
 
 lazy_static! {
+    static ref NOT_ALPHANUMERIC: Regex = Regex::new("[^a-zA-Z0-9]").unwrap();
+
     /// Reserved words according to https://www.postgresql.org/docs/14/sql-keywords-appendix.html
     static ref POSTGRESQL_RESERVED_WORDS: HashSet<String> = {
         let mut set = HashSet::new();
