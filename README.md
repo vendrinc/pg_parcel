@@ -1,6 +1,6 @@
-# pg_parcel
-
 ![screenshot](screenshots/demo.gif)
+
+# pg_parcel
 
 A solution to: https://postgrespro.com/list/thread-id/1715772
 
