@@ -2,7 +2,7 @@
 name = "pg_parcel"
 description = "Dump horizontal slices from PostgreSQL schemas"
 authors = ["Jacob Elder <jacob.elder@vendr.com>"]
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 repository = "https://github.com/Blissfully/pg_parcel"
 publish = false
