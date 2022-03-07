@@ -13,7 +13,7 @@ impl SqlString for String {
     }
 
     fn sql_identifier(&self) -> Self {
-        if needs_quoting(&self) {
+        if needs_quoting(self) {
             return format!(r#""{}""#, self);
         }
         self.to_owned()

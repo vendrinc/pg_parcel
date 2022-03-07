@@ -44,8 +44,8 @@ impl Options {
             column_value: args.id,
             database_url: file.database_url,
             schema: file.schema_name,
-            skip_tables: file.skip_tables.unwrap_or(HashSet::new()),
-            overrides: file.overrides.unwrap_or(HashMap::new()),
+            skip_tables: file.skip_tables.unwrap_or_default(),
+            overrides: file.overrides.unwrap_or_default(),
         };
         Ok(options)
     }
@@ -185,12 +185,11 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
         .filter(|(name, ..)| !options.skip_tables.contains(name))
         .map(|(name, mut columns)| {
             columns.sort_by(|a, b| a.position.cmp(&b.position));
-            let table = Table {
+            Table {
                 name,
                 columns,
                 schema: options.schema.to_owned(),
-            };
-            table
+            }
         })
         .collect();
 

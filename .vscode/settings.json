@@ -1,4 +1,5 @@
 {
+  "rust-analyzer.checkOnSave.command": "clippy",
   "todo-tree.regex.regex": "((//|#|<!--|;|/\\*|^)\\s*($TAGS)|($TAGS)!.*)",
   "todo-tree.regex.regexCaseSensitive": false
 }
