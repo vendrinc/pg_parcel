@@ -21,7 +21,7 @@ struct Args {
     #[clap(short, long)]
     id: String,
 
-    /// Tables with this column name will only include rows with the value specified by --id
+    /// Tables with this column name will only include rows with the value specified by <ID>
     #[clap(short, long)]
     column_name: Option<String>,
 

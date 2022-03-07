@@ -107,29 +107,59 @@ config:
 
 # Records, feel free to edit them
 records:
-  - delay: 453
-    content: "\e]0; jacobelder \a"
-  - delay: 16
+  - delay: 14
     content: "\e[?2004h\r\n\e[1;36m~\e[0m \r\n\e[1;32m❯\e[0m "
-  - delay: 1048
-    content: terminalizer record
-  - delay: 145
-    content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-457c-a777-9581741fd45f > dump.sql"
-  - delay: 1599
-    content: "\r\e[C\e[C\e[C\e[C\e[C\e[C\e[C\e[C\e[C\e[C\e[C\e[C\e[C\e[Chelp\e[K"
-  - delay: 924
+  - delay: 20
+    content: p
+  - delay: 20
+    content: g
+  - delay: 20
+    content: _
+  - delay: 20
+    content: p
+  - delay: 20
+    content: a
+  - delay: 20
+    content: r
+  - delay: 20
+    content: c
+  - delay: 20
+    content: e
+  - delay: 20
+    content: l
+  - delay: 20
+    content: " "
+  - delay: 20
+    content: "-"
+  - delay: 20
+    content: "-"
+  - delay: 20
+    content: h
+  - delay: 20
+    content: e
+  - delay: 20
+    content: l
+  - delay: 20
+    content: p
+  - delay: 320
     content: "\r\n\e[?2004l\r"
   - delay: 22
-    content: "\e[0m\e[0m\e[0m\e[0m\e[0m\e[32mpg_parcel\e[0m\e[0m \e[0m\e[0m0.2.1\e[0m\e[0m\r\n\e[0m\e[0mJacob Elder <jacob.elder@vendr.com>\e[0m\e[0m\r\n\e[0m\e[0m\e[0m\e[0mDump horizontal slices from PostgreSQL schemas\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m\e[33mUSAGE:\e[0m\e[0m\r\n    \e[0m\e[0mpg_parcel [OPTIONS] --id <ID>\e[0m\e[0m\r\n\r\n\e[0m\e[0m\e[33mOPTIONS:\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-c\e[0m\e[0m, \e[0m\e[0m\e[32m--column-name\e[0m\e[0m \e[0m\e[0m\e[32m<COLUMN_NAME>\e[0m\e[0m\r\n            \e[0m\e[0mTables with this column name will only include rows with the value\e[0m\e[0m\r\n\e[0m\e[0m            \e[0m\e[0mspecified by --id\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-f\e[0m\e[0m, \e[0m\e[0m\e[32m--file\e[0m\e[0m \e[0m\e[0m\e[32m<FILE>\e[0m\e[0m\r\n            \e[0m\e[0m[default: ./pg_parcel.toml]\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-h\e[0m\e[0m, \e[0m\e[0m\e[32m--help\e[0m\e[0m\r\n            \e[0m\e[0mPrint help information\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-i\e[0m\e[0m, \e[0m\e[0m\e[32m--id\e[0m\e[0m \e[0m\e[0m\e[32m<ID>\e[0m\e[0m\r\n            \e[0m\e[0mDump only columns where column_name is this value\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-V\e[0m\e[0m, \e[0m\e[0m\e[32m--version\e[0m\e[0m\r\n            \e[0m\e[0mPrint version information\e[0m\e[0m\e[0m\e[0m\e[0m\e[0m\r\n\e[0m"
-  - delay: 5
-    content: "\e]0; jacobelder \a"
+    content: "\e[0m\e[0m\e[0m\e[0m\e[0m\e[32mpg_parcel\e[0m\e[0m \e[0m\e[0m0.2.1\e[0m\e[0m\r\n\e[0m\e[0mJacob Elder <jacob.elder@vendr.com>\e[0m\e[0m\r\n\e[0m\e[0m\e[0m\e[0mDump horizontal slices from PostgreSQL schemas\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m\e[33mUSAGE:\e[0m\e[0m\r\n    \e[0m\e[0mpg_parcel [OPTIONS] --id <ID>\e[0m\e[0m\r\n\r\n\e[0m\e[0m\e[33mOPTIONS:\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-c\e[0m\e[0m, \e[0m\e[0m\e[32m--column-name\e[0m\e[0m \e[0m\e[0m\e[32m<COLUMN_NAME>\e[0m\e[0m\r\n            \e[0m\e[0mTables with this column name will only include rows with the value\e[0m\e[0m\r\n\e[0m\e[0m            \e[0m\e[0mspecified by <ID>\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-f\e[0m\e[0m, \e[0m\e[0m\e[32m--file\e[0m\e[0m \e[0m\e[0m\e[32m<FILE>\e[0m\e[0m\r\n            \e[0m\e[0m[default: ./pg_parcel.toml]\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-h\e[0m\e[0m, \e[0m\e[0m\e[32m--help\e[0m\e[0m\r\n            \e[0m\e[0mPrint help information\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-i\e[0m\e[0m, \e[0m\e[0m\e[32m--id\e[0m\e[0m \e[0m\e[0m\e[32m<ID>\e[0m\e[0m\r\n            \e[0m\e[0mDump only columns where column_name is this value\e[0m\e[0m\r\n\e[0m\e[0m\r\n\e[0m\e[0m    \e[0m\e[0m\e[32m-V\e[0m\e[0m, \e[0m\e[0m\e[32m--version\e[0m\e[0m\r\n            \e[0m\e[0mPrint version information\e[0m\e[0m\e[0m\e[0m\e[0m\e[0m\r\n\e[0m"
   - delay: 28
     content: "\e[?2004h\r\n\e[1;36m~\e[0m \r\n\e[1;32m❯\e[0m "
-  - delay: 1071
-    content: pg_parcel --help
-  - delay: 198
-    content: "\r\e[C\e[Cterminalizer record"
-  - delay: 982
+  - delay: 250
+    content: "\r\e[C\e[Cpg_parcel --id"
+  - delay: 250
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638-"
+  - delay: 250
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-"
+  - delay: 250
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-457c-a777-"
+  - delay: 250
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-457c-a777-9581741fd45f"
+  - delay: 250
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-457c-a777-9581741fd45f > "
+  - delay: 250
     content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-457c-a777-9581741fd45f > dump.sql"
   - delay: 962
     content: "\r\n\e[?2004l\r"
@@ -141,8 +171,6 @@ records:
     content: "\e[1A\r\e[2K\e[1B\e[1A        accountingEventRulings ⠁ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 17s\r\n"
   - delay: 70
     content: "\e[1A\r\e[2K\e[1B\e[1A        accountingEventVendors ⠉ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 15s\r\n"
-  - delay: 97
-    content: "\e[1A\r\e[2K\e[1B\e[1A           allowedGoogleGroups ⠉ █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 12s\r\n"
   - delay: 94
     content: "\e[1A\r\e[2K\e[1B\e[1A            appRoleAssignments ⠉ ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
   - delay: 92
@@ -155,20 +183,6 @@ records:
     content: "\e[1A\r\e[2K\e[1B\e[1A                      comments ⠒ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
   - delay: 189
     content: "\e[1A\r\e[2K\e[1B\e[1A           complianceOverviews ⠒ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
-  - delay: 278
-    content: "\e[1A\r\e[2K\e[1B\e[1A            concurTransactions ⠂ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
-  - delay: 254
-    content: "\e[1A\r\e[2K\e[1B\e[1A            concurTransactions ⠒ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
-  - delay: 254
-    content: "\e[1A\r\e[2K\e[1B\e[1A            concurTransactions ⠲ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
-  - delay: 253
-    content: "\e[1A\r\e[2K\e[1B\e[1A            concurTransactions ⠴ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
-  - delay: 256
-    content: "\e[1A\r\e[2K\e[1B\e[1A            concurTransactions ⠤ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 11s\r\n"
-  - delay: 101
-    content: "\e[1A\r\e[2K\e[1B\e[1A            concurTransactions ⠤ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 12s\r\n"
-  - delay: 117
-    content: "\e[1A\r\e[2K\e[1B\e[1A     concurTransactionsRulings ⠤ ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 13s\r\n"
   - delay: 85
     content: "\e[1A\r\e[2K\e[1B\e[1A       contactResponsibilities ⠄ ████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 13s\r\n"
   - delay: 72
@@ -228,20 +242,6 @@ records:
   - delay: 251
     content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠖ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
   - delay: 256
-    content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠒ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
-  - delay: 250
-    content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠐ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
-  - delay: 256
-    content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠐ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
-  - delay: 255
-    content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠒ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
-  - delay: 256
-    content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠓ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
-  - delay: 253
-    content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠋ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
-  - delay: 254
-    content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠉ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
-  - delay: 255
     content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠈ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
   - delay: 255
     content: "\e[1A\r\e[2K\e[1B\e[1A            licenseAssignments ⠈ ████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░ eta 46s\r\n"
@@ -269,17 +269,11 @@ records:
     content: "\e[1A\r\e[2K\e[1B\e[1A                   peopleTeams ⠐ ███████████████░░░░░░░░░░░░░░░░░░░░░░░░ eta 41s\r\n"
   - delay: 226
     content: "\e[1A\r\e[2K\e[1B\e[1A                   peopleTeams ⠐ ███████████████░░░░░░░░░░░░░░░░░░░░░░░░ eta 41s\r\n"
-  - delay: 211
-    content: "\e[1A\r\e[2K\e[1B\e[1A             peopleToBeDeleted ⠒ ███████████████░░░░░░░░░░░░░░░░░░░░░░░░ eta 41s\r\n"
   - delay: 104
     content: "\e[1A\r\e[2K\e[1B\e[1A    personProductConfirmations ⠋ ████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 40s\r\n"
   - delay: 151
     content: "\e[1A\r\e[2K\e[1B\e[1A            personProductFacts ⠉ ████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 40s\r\n"
   - delay: 255
-    content: "\e[1A\r\e[2K\e[1B\e[1A            personProductFacts ⠈ ████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 40s\r\n"
-  - delay: 251
-    content: "\e[1A\r\e[2K\e[1B\e[1A            personProductFacts ⠁ ████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 40s\r\n"
-  - delay: 254
     content: "\e[1A\r\e[2K\e[1B\e[1A            personProductFacts ⠐ ████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 40s\r\n"
   - delay: 251
     content: "\e[1A\r\e[2K\e[1B\e[1A            personProductFacts ⠐ ████████████████░░░░░░░░░░░░░░░░░░░░░░░ eta 40s\r\n"
