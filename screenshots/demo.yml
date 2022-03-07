@@ -110,15 +110,15 @@ records:
   - delay: 0
     content: "\r\e[C\e[Cpg_parcel"
   - delay: 10
-    content: "\r\e[C\e[Cpg_parcel -i 731a3638"
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638"
   - delay: 20
-    content: "\r\e[C\e[Cpg_parcel -i 731a3638-8e94-457c-"
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-457c-"
   - delay: 30
-    content: "\r\e[C\e[Cpg_parcel -i 731a3638-8e94-457c-a777-"
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-457c-a777-"
   - delay: 40
-    content: "\r\e[C\e[Cpg_parcel -i 731a3638-8e94-457c-a777-9581741fd45f"
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-457c-a777-9581741fd45f"
   - delay: 50
-    content: "\r\e[C\e[Cpg_parcel -i 731a3638-8e94-457c-a777-9581741fd45f > dump.sql"
+    content: "\r\e[C\e[Cpg_parcel --id 731a3638-8e94-457c-a777-9581741fd45f > dump.sql"
   - delay: 937
     content: "\r\n\e[?2004l\r"
   - delay: 282
