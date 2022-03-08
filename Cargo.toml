@@ -1,13 +1,14 @@
 [package]
 name = "pg_parcel"
-description = "Dump horizontal slices from PostgreSQL schemas"
-authors = ["Jacob Elder <jacob.elder@vendr.com>"]
+description = "Dump horizontal slices from PostgreSQL schemas. Like if pg_dump had a --where option."
+keywords = ["postgresql"]
+categories = ["command-line-utilities"]
+authors = ["Jacob Elder"]
 version = "0.3.0"
 edition = "2021"
 repository = "https://github.com/Blissfully/pg_parcel"
-publish = false
 license = "MIT OR Apache-2.0"
-exclude = ["screenshots/*"]
+exclude = ["screenshots", ".vscode", "release.sh", "Brewfile", ".github"]
 
 [dependencies]
 postgres = "0.19.2"
