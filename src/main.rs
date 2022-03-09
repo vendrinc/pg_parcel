@@ -62,6 +62,12 @@ impl Options {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let options = Options::load()?;
+    let mut client = Client::connect(&options.database_url, NoTls)?;
+
+    client
+        .query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])
+        .unwrap();
+
     let tables = get_tables(&options)?;
 
     let pb = ProgressBar::new(tables.len() as u64);
@@ -69,8 +75,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         ProgressStyle::default_bar().template("{msg:>30.bold} {spinner} {wide_bar} eta {eta}"),
     );
     pb.enable_steady_tick(250);
-
-    let mut client = Client::connect(&options.database_url, NoTls)?;
 
     for table in tables.iter() {
         let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
@@ -82,8 +86,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!("{}\\.", std::str::from_utf8(&buf)?);
         pb.inc(1);
     }
-
     pb.finish_with_message(format!("Dumped {} tables", tables.len()));
+
+    client.query("ROLLBACK", &[]).unwrap();
 
     Ok(())
 }
