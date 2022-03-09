@@ -32,7 +32,7 @@ fn needs_quoting(string: &str) -> bool {
         return true;
     }
 
-    if POSTGRESQL_RESERVED_WORDS.contains(&lower) {
+    if POSTGRESQL_RESERVED_WORDS.contains(lower.as_str()) {
         return true;
     }
 
@@ -68,7 +68,7 @@ lazy_static! {
     static ref NOT_ALPHANUMERIC: Regex = Regex::new("[^a-zA-Z0-9]").unwrap();
 
     /// Reserved words according to https://www.postgresql.org/docs/14/sql-keywords-appendix.html
-    static ref POSTGRESQL_RESERVED_WORDS: HashSet<String> = [
+    static ref POSTGRESQL_RESERVED_WORDS: HashSet<&'static str> = [
         "a",
         "abort",
         "abs",
@@ -897,6 +897,5 @@ lazy_static! {
         "zone"
     ]
     .into_iter()
-    .map(str::to_owned)
     .collect();
 }
