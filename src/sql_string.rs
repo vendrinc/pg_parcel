@@ -24,7 +24,7 @@ fn needs_quoting(string: &str) -> bool {
     let lower = string.to_ascii_lowercase();
 
     // If it doesn't match the lower case equivalent, assume the column name is actually mixed cased and that we need to quote it.
-    if !string.eq(&lower) {
+    if string != lower {
         return true;
     }
 
