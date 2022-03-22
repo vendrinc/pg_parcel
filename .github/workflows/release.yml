@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Add targets
+        run: |
+          rustup target add aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target aarch64-apple-darwin
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target x86_64-apple-darwin
+
+      - name: Build binary
+        run: |
+          lipo -create \
+            -output target/pg_parcel-apple-darwin \
+            target/aarch64-apple-darwin/release/pg_parcel \
+            target/x86_64-apple-darwin/release/pg_parcel
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: macos-package
+          path: target/pg_parcel-apple-darwin
+
+  create-release:
+    name: Create release
+    needs: [build-macos]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: macos-package
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            pg_parcel-apple-darwin
