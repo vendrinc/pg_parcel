@@ -1,4 +1,4 @@
-name: pg_parcel CI
+name: CI
 
 on:
   push:
