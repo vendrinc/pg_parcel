@@ -1,9 +1,11 @@
 name: Release
 
-on:
-  push:
-    tags:
-      - "v*"
+# on:
+#   push:
+#     tags:
+#       - "v*"
+
+on: push
 
 jobs:
   build-macos:
@@ -18,8 +20,6 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-
-      - uses: Swatinem/rust-cache@v1
 
       - name: Add targets
         run: |
@@ -36,7 +36,7 @@ jobs:
           command: build
           args: --release --target x86_64-apple-darwin
 
-      - name: Build binary
+      - name: Build Universal macOS Binary
         run: |
           lipo -create \
             -output target/pg_parcel-apple-darwin \
@@ -48,9 +48,36 @@ jobs:
           name: macos-package
           path: target/pg_parcel-apple-darwin
 
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          # target: aarch64-unknown-linux-gnu
+
+      # - name: Add targets
+      #   run: |
+      #     rustup target add aarch64-unknown-linux-gnu
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release #--target aarch64-unknown-linux-gnu
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: linux-package
+          path: target/pg_parcel
+
   create-release:
     name: Create release
-    needs: [build-macos]
+    needs: [build-macos, build-linux]
     runs-on: ubuntu-latest
 
     steps:
@@ -58,7 +85,12 @@ jobs:
         with:
           name: macos-package
 
+      - uses: actions/download-artifact@v2
+        with:
+          name: linux-package
+
       - uses: softprops/action-gh-release@v1
         with:
           files: |
             pg_parcel-apple-darwin
+            pg_parcel
