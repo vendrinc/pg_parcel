@@ -1,96 +1,125 @@
 name: Release
 
-# on:
-#   push:
-#     tags:
-#       - "v*"
-
-on: push
+on:
+  push:
+    tags:
+      - "v*"
 
 jobs:
-  build-macos:
-    name: Build macOS
+  aarch64-apple-darwin:
+    name: Build macOS ARM
     runs-on: macos-latest
-
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-
-      - name: Add targets
-        run: |
-          rustup target add aarch64-apple-darwin
-          rustup target add x86_64-apple-darwin
-
+          target: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --target aarch64-apple-darwin
+      - uses: actions/upload-artifact@v2
+        with:
+          name: aarch64-apple-darwin
+          path: target/aarch64-apple-darwin/release/pg_parcel
+          if-no-files-found: error
 
+  x86_64-apple-darwin:
+    name: Build macOS Intel
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --target x86_64-apple-darwin
+      - uses: actions/upload-artifact@v2
+        with:
+          name: x86_64-apple-darwin
+          path: target/x86_64-apple-darwin/release/pg_parcel
+          if-no-files-found: error
 
+  macos-universal:
+    name: Build macOS Universal
+    runs-on: macos-latest
+    needs: [aarch64-apple-darwin, x86_64-apple-darwin]
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: x86_64-apple-darwin
+          path: pg_parcel-x86_64-apple-darwin
+      - uses: actions/download-artifact@v2
+        with:
+          name: aarch64-apple-darwin
+          path: pg_parcel-aarch64-apple-darwin
+      - name: debug
+        run: find .
       - name: Build Universal macOS Binary
         run: |
           lipo -create \
-            -output target/pg_parcel-apple-darwin \
-            target/aarch64-apple-darwin/release/pg_parcel \
-            target/x86_64-apple-darwin/release/pg_parcel
-
+            -output pg_parcel-apple-darwin \
+            pg_parcel-x86_64-apple-darwin/pg_parcel \
+            pg_parcel-aarch64-apple-darwin/pg_parcel
       - uses: actions/upload-artifact@v2
         with:
-          name: macos-package
-          path: target/pg_parcel-apple-darwin
+          name: apple-darwin
+          path: pg_parcel-apple-darwin
+          if-no-files-found: error
 
   build-linux:
     name: Build Linux
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
-          # target: aarch64-unknown-linux-gnu
-
-      # - name: Add targets
-      #   run: |
-      #     rustup target add aarch64-unknown-linux-gnu
-
+          target: x86_64-unknown-linux-musl
+      - uses: Swatinem/rust-cache@v1
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release #--target aarch64-unknown-linux-gnu
-
+          args: --release --target x86_64-unknown-linux-musl
       - uses: actions/upload-artifact@v2
         with:
-          name: linux-package
-          path: target/pg_parcel
+          name: linux
+          path: target/x86_64-unknown-linux-musl/release/pg_parcel
+          if-no-files-found: error
 
   create-release:
     name: Create release
-    needs: [build-macos, build-linux]
+    needs: [macos-universal, build-linux]
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/download-artifact@v2
         with:
-          name: macos-package
-
+          name: linux
+          path: linux
       - uses: actions/download-artifact@v2
         with:
-          name: linux-package
-
+          name: apple-darwin
+      - name: Rename executables
+        run: |
+          mv -v linux/pg_parcel pg_parcel-linux
+          find .
       - uses: softprops/action-gh-release@v1
         with:
           files: |
             pg_parcel-apple-darwin
-            pg_parcel
+            pg_parcel-linux
+          fail_on_unmatched_files: true
+          draft: true
+          prerelease: true
