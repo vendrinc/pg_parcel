@@ -28,7 +28,7 @@ jobs:
           command: check
           args: --no-default-features
       - uses: actions-rs/cargo@v1
-        name fmt
+        name: fmt
         with:
           command: fmt
           args: --all -- --check
