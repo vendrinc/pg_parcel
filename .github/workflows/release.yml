@@ -116,8 +116,28 @@ jobs:
           mv -v linux/pg_parcel pg_parcel-linux
           find .
       - uses: softprops/action-gh-release@v1
+        id: release
         with:
           files: |
             pg_parcel-apple-darwin
             pg_parcel-linux
           fail_on_unmatched_files: true
+      - name: Extract version
+        id: extract-version
+        run: |
+          printf "::set-output name=%s::%s\n" tag-name "${GITHUB_REF#refs/tags/}"
+      - uses: mislav/bump-homebrew-formula-action@v1
+        # if: "!contains(github.ref, '-')" # skip prereleases
+        with:
+          formula-name: pg_parcel
+          formula-path: Formula/pg_parcel.rb
+          homebrew-tap: Blissfully/homebrew-tools
+          base-branch: master
+          download-url: ${{ fromJSON(steps.release.outputs.assets)[0].browser_download_url }}
+          commit-message: |
+            {{formulaName}} {{version}}
+
+            Created by https://github.com/mislav/bump-homebrew-formula-action
+        env:
+          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
