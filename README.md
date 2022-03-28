@@ -2,9 +2,10 @@
 
 # pg_parcel
 
-A solution to: https://postgrespro.com/list/thread-id/1715772
+[![CI](https://github.com/Blissfully/pg_parcel/actions/workflows/build.yml/badge.svg)](https://github.com/Blissfully/pg_parcel/actions/workflows/build.yml)
+[![Release](https://github.com/Blissfully/pg_parcel/actions/workflows/release.yml/badge.svg)](https://github.com/Blissfully/pg_parcel/actions/workflows/release.yml)
 
-It's like a very minimal subset of `pg_dump`, but with the addition of `mysqldump`'s `--where` option.
+A very minimal subset of `pg_dump`, but with the addition of `mysqldump`'s `--where` option. A solution to: https://postgrespro.com/list/thread-id/1715772
 
 Most options are specified via config file.
 
