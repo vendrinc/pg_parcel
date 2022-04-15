@@ -165,14 +165,19 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
     let query = format!(
         r#"
         select
-            table_name,
-            column_name,
-            case is_nullable when 'YES' then True else False end as is_nullable,
-            ordinal_position
+            columns.table_name,
+            columns.column_name,
+            case columns.is_nullable when 'YES' then True else False end as is_nullable,
+            columns.ordinal_position
         from information_schema.columns
-        where table_schema = {schema}
-        order by table_name, ordinal_position;
-    "#,
+        join information_schema.tables on (
+            tables.table_catalog = columns.table_catalog
+            and tables.table_schema = columns.table_schema
+            and tables.table_name = columns.table_name)
+        where columns.table_schema = {schema}
+        and tables.table_type = 'BASE TABLE'
+        order by columns.table_name, columns.ordinal_position
+        "#,
         schema = options.schema.sql_value(),
     );
     let mut tables: Vec<Table> = client
