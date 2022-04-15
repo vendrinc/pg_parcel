@@ -31,6 +31,12 @@ user_files = """
 """
 ```
 
+## Releases
+
+We publish binaries for both Linux x86_64 (any distro, using [musl](https://musl.libc.org/)) and macOS Universal (both Intel and Apple Silicon in a single binary).
+
+To create a new release, update `Cargo.toml` and create a tag like `v1.2.3` (SemVer, prefixed with `v`).
+
 ## License
 
 Licensed under either of
