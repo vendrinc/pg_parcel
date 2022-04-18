@@ -69,9 +69,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     let tables = get_tables(&options)?;
 
     let pb = ProgressBar::new(tables.len() as u64);
-    pb.set_style(
-        ProgressStyle::default_bar().template("{msg:>30.bold} {spinner} {wide_bar} eta {eta}"),
+    let pb_template = format!(
+        "{{msg:>{width}.bold}} {{spinner}} {{wide_bar}} eta {{eta}} ",
+        width = tables
+            .iter()
+            .map(|table| table.name.len())
+            .max()
+            .unwrap_or(30)
     );
+    pb.set_style(ProgressStyle::default_bar().template(&pb_template));
     pb.enable_steady_tick(250);
 
     for table in tables.iter() {
