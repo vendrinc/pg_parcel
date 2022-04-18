@@ -64,9 +64,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let options = Options::load()?;
     let mut client = Client::connect(&options.database_url, NoTls)?;
 
-    client
-        .query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])
-        .unwrap();
+    client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])?;
 
     let tables = get_tables(&options)?;
 
@@ -88,7 +86,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     pb.finish_with_message(format!("Dumped {} tables", tables.len()));
 
-    client.query("ROLLBACK", &[]).unwrap();
+    client.query("ROLLBACK", &[])?;
 
     Ok(())
 }
