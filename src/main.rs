@@ -125,6 +125,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else {
         let mut sizes: Vec<(String, u64)> = Vec::with_capacity(tables.len());
 
+        // Dump table data.
         for table in tables.iter() {
             let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
             pb.set_message(table.name.to_owned());
@@ -138,20 +139,25 @@ fn main() -> Result<(), Box<dyn Error>> {
 
             pb.inc(1);
         }
-        pb.finish_with_message(format!("Dumped {} tables", tables.len()));
 
-        // Summarize table sizes.
+        // Summarize table sizes. Append the report to the dump as SQL comments.
         {
             let total = sizes.iter().map(|(.., size)| *size).sum::<u64>();
             if total > 0 {
-                eprintln!("       Bytes | % of total | Table name");
+                let mut stdout = std::io::stdout();
+                writeln!(stdout)?;
+                writeln!(stdout, "-- SUMMARY ---------------------------------")?;
+                writeln!(stdout, "--        Bytes | % of total | Table name")?;
+                writeln!(stdout, "-- -----------------------------------------")?;
                 sizes.sort_by_key(|(.., size)| *size);
                 for (name, size) in sizes.iter() {
                     let percent = ((*size as f64) * 100f64) / (total as f64);
-                    eprintln!("{size:12} | {percent:9.1}% | {name}");
+                    writeln!(stdout, "-- {size:12} | {percent:9.1}% | {name}")?;
                 }
             }
         }
+
+        pb.finish_with_message(format!("Dumped {} tables", tables.len()));
     }
 
     client.query("ROLLBACK", &[])?;
