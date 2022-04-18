@@ -25,9 +25,19 @@ struct Args {
     #[clap(short, long)]
     column_name: Option<String>,
 
+    /// Configuration file
     #[clap(short, long)]
     #[clap(default_value_t = String::from("./pg_parcel.toml"))]
     file: String,
+
+    /// Prints a report estimating row count and size of the data to be dumped
+    /// for each table, and in total. Does not dump table data.
+    ///
+    /// Note that the figures reported may be well off the mark, especially the
+    /// estimated size of the dump, but they should be off the mark by a roughly
+    /// constant factor.
+    #[clap(long)]
+    estimate_only: bool,
 }
 
 /// Options here is a combination of command line arguments and contents of the slicefile.
@@ -38,6 +48,7 @@ struct Options {
     database_url: String,
     skip_tables: HashSet<String>,
     overrides: HashMap<String, String>,
+    estimate_only: bool,
 }
 
 impl Options {
@@ -55,6 +66,7 @@ impl Options {
             schema: file.schema_name,
             skip_tables: file.skip_tables.unwrap_or_default(),
             overrides: file.overrides.unwrap_or_default(),
+            estimate_only: args.estimate_only,
         };
         Ok(options)
     }
@@ -67,7 +79,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])?;
 
     let tables = get_tables(&options)?;
-    let mut sizes: Vec<(String, u64)> = Vec::with_capacity(tables.len());
 
     let pb = ProgressBar::new(tables.len() as u64);
     let pb_template = format!(
@@ -81,35 +92,69 @@ fn main() -> Result<(), Box<dyn Error>> {
     pb.set_style(ProgressStyle::default_bar().template(&pb_template));
     pb.enable_steady_tick(250);
 
-    for table in tables.iter() {
-        let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
-        pb.set_message(table.name.to_owned());
+    if options.estimate_only {
+        let mut total_size: u64 = 0; // Estimate in kibibytes.
 
-        let mut stdout = std::io::stdout();
-        writeln!(stdout, "{};", table.copy_in_query())?;
-        let mut reader = client.copy_out(&copy_statement)?;
-        let size = std::io::copy(&mut reader, &mut stdout)?;
-        sizes.push((table.name.clone(), size));
-        writeln!(stdout, "\\.")?;
+        pb.println("        Rows / Total |         |  Size estimate | Table name");
+        for table in tables.iter() {
+            let count_statement = format!(
+                // The `postgres` crate does not define `FromSql for u64` (or
+                // usize, or u128), so it would appear that the only safe way to
+                // query a PostgreSQL `int8` is as text.
+                "SELECT COUNT(*)::text FROM ({}) AS query",
+                table.copy_out_query(&options)
+            );
+            pb.set_message(table.name.to_owned());
+            let row_count_s: String = client.query_one(&count_statement, &[])?.get(0);
+            let row_count: u64 = row_count_s.parse()?;
+            let row_selectivity = (100f64 * row_count as f64 / table.rows as f64)
+                .max(0.0) // Deal with NAN.
+                .clamp(0.0, 100.0);
+            let size_estimate = ((row_count as f64 * table.size as f64)
+                / (table.rows as f64 * 1024f64))
+                .max(0.0) as u64; // Deal with NAN.
+            pb.println(format!(
+                "{row_frac:>20} | {row_selectivity:>6.2}% | {size_estimate:10.0} kiB | {name}",
+                row_frac = format!("{row_count} of {rows_total}", rows_total = table.rows),
+                name = table.name
+            ));
+            pb.inc(1);
+            total_size += size_estimate;
+        }
+        pb.finish_with_message(format!("Total size estimated at: {total_size} kiB"));
+    } else {
+        let mut sizes: Vec<(String, u64)> = Vec::with_capacity(tables.len());
 
-        pb.inc(1);
-    }
-    pb.finish_with_message(format!("Dumped {} tables", tables.len()));
+        for table in tables.iter() {
+            let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
+            pb.set_message(table.name.to_owned());
 
-    client.query("ROLLBACK", &[])?;
+            let mut stdout = std::io::stdout();
+            writeln!(stdout, "{};", table.copy_in_query())?;
+            let mut reader = client.copy_out(&copy_statement)?;
+            let size = std::io::copy(&mut reader, &mut stdout)?;
+            sizes.push((table.name.clone(), size));
+            writeln!(stdout, "\\.")?;
 
-    // Summarize table sizes.
-    {
-        let total = sizes.iter().map(|(.., size)| *size).sum::<u64>();
-        if total > 0 {
-            eprintln!("       Bytes | % of total | Table name");
-            sizes.sort_by_key(|(.., size)| *size);
-            for (name, size) in sizes.iter() {
-                let percent = ((*size as f64) * 100f64) / (total as f64);
-                eprintln!("{size:12} | {percent:9.1}% | {name}");
+            pb.inc(1);
+        }
+        pb.finish_with_message(format!("Dumped {} tables", tables.len()));
+
+        // Summarize table sizes.
+        {
+            let total = sizes.iter().map(|(.., size)| *size).sum::<u64>();
+            if total > 0 {
+                eprintln!("       Bytes | % of total | Table name");
+                sizes.sort_by_key(|(.., size)| *size);
+                for (name, size) in sizes.iter() {
+                    let percent = ((*size as f64) * 100f64) / (total as f64);
+                    eprintln!("{size:12} | {percent:9.1}% | {name}");
+                }
             }
         }
     }
+
+    client.query("ROLLBACK", &[])?;
 
     Ok(())
 }
