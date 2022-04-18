@@ -10,7 +10,7 @@ use sql_string::SqlString;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
-use std::io::Read;
+use std::io::Write;
 use std::path::Path;
 
 #[derive(Parser, Debug)]
@@ -83,11 +83,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     for table in tables.iter() {
         let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
         pb.set_message(table.name.to_owned());
+
+        let mut stdout = std::io::stdout();
+        writeln!(stdout, "{};", table.copy_in_query())?;
         let mut reader = client.copy_out(&copy_statement)?;
-        let mut buf = vec![];
-        reader.read_to_end(&mut buf)?;
-        println!("{};", table.copy_in_query());
-        println!("{}\\.", std::str::from_utf8(&buf)?);
+        let size = std::io::copy(&mut reader, &mut stdout)?;
+        writeln!(stdout, "\\.")?;
+
         pb.inc(1);
     }
     pb.finish_with_message(format!("Dumped {} tables", tables.len()));
