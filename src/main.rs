@@ -67,6 +67,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])?;
 
     let tables = get_tables(&options)?;
+    let mut sizes: Vec<(String, u64)> = Vec::with_capacity(tables.len());
 
     let pb = ProgressBar::new(tables.len() as u64);
     let pb_template = format!(
@@ -88,6 +89,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         writeln!(stdout, "{};", table.copy_in_query())?;
         let mut reader = client.copy_out(&copy_statement)?;
         let size = std::io::copy(&mut reader, &mut stdout)?;
+        sizes.push((table.name.clone(), size));
         writeln!(stdout, "\\.")?;
 
         pb.inc(1);
@@ -96,8 +98,22 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     client.query("ROLLBACK", &[])?;
 
+    // Summarize table sizes.
+    {
+        let total = sizes.iter().map(|(.., size)| *size).sum::<u64>();
+        if total > 0 {
+            eprintln!("       Bytes | % of total | Table name");
+            sizes.sort_by_key(|(.., size)| *size);
+            for (name, size) in sizes.iter() {
+                let percent = ((*size as f64) * 100f64) / (total as f64);
+                eprintln!("{size:12} | {percent:9.1}% | {name}");
+            }
+        }
+    }
+
     Ok(())
 }
+
 #[derive(Debug, Clone)]
 struct Table {
     name: String,
