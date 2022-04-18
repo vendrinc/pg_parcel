@@ -182,7 +182,6 @@ impl Table {
 struct Column {
     pub name: String,
     pub is_nullable: bool,
-    pub position: i32,
 }
 
 fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
@@ -222,16 +221,12 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
                 let table_size: u64 = table_size_s.parse().unwrap_or(0);
                 let table_rows_s: String = row.get("table_rows");
                 let table_rows: u64 = table_rows_s.parse().unwrap_or(0);
-                let column_names: Vec<&str> = row.get("column_names");
+                let column_names: Vec<String> = row.get("column_names");
                 let column_nullables: Vec<bool> = row.get("column_nullables");
-                let columns = (1..)
-                    .zip(column_names)
+                let columns = column_names
+                    .into_iter()
                     .zip(column_nullables)
-                    .map(|((position, name), is_nullable)| Column {
-                        name: name.to_owned(),
-                        is_nullable,
-                        position,
-                    })
+                    .map(|(name, is_nullable)| Column { name, is_nullable })
                     .collect();
                 Some(Table {
                     name: table_name,
