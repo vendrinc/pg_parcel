@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 exclude = ["screenshots", ".vscode", "release.sh", "Brewfile", ".github"]
 
 [dependencies]
-postgres = "0.19.2"
+postgres = { version = "0.19.2", features = ["array-impls"] }
 lazy_static = "1.4.0"
 dialoguer = "0.10.0"
 indicatif = "0.16.2"

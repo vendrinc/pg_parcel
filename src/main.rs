@@ -119,6 +119,7 @@ struct Table {
     name: String,
     columns: Vec<Column>,
     schema: String,
+    size: u64, // Bytes.
 }
 
 impl Table {
@@ -188,49 +189,49 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
     let query = format!(
         r#"
         select
-            columns.table_name,
-            columns.column_name,
-            case columns.is_nullable when 'YES' then True else False end as is_nullable,
-            columns.ordinal_position
-        from information_schema.columns
-        join information_schema.tables on (
-            tables.table_catalog = columns.table_catalog
-            and tables.table_schema = columns.table_schema
-            and tables.table_name = columns.table_name)
-        where columns.table_schema = {schema}
+          tables.table_name,
+          pg_total_relation_size(tables.table_schema || '.' || tables.table_name)::text as table_size,
+          array_agg(columns.column_name::text order by columns.ordinal_position) as table_column_names,
+          array_agg(columns.is_nullable = 'YES' order by columns.ordinal_position) as table_columns_nullable
+        from information_schema.tables
+        join information_schema.columns on (
+          columns.table_catalog = tables.table_catalog
+          and columns.table_schema = tables.table_schema
+          and columns.table_name = tables.table_name)
+        where tables.table_schema = {schema}
         and tables.table_type = 'BASE TABLE'
-        order by columns.table_name, columns.ordinal_position
+        group by tables.table_schema, tables.table_name
+        order by tables.table_schema, tables.table_name
         "#,
         schema = options.schema.sql_value(),
     );
     let mut tables: Vec<Table> = client
         .query(&query, &[])?
         .into_iter()
-        .fold(
-            HashMap::new(),
-            |mut acc: HashMap<String, Vec<Column>>, row| {
-                let table_name: &str = row.get("table_name");
-                let column = Column {
-                    name: row.get("column_name"),
-                    is_nullable: row.get("is_nullable"),
-                    position: row.get("ordinal_position"),
-                };
-                if let Some(columns) = acc.get_mut(table_name) {
-                    columns.push(column)
-                } else {
-                    acc.insert(table_name.to_owned(), vec![column]);
-                }
-                acc
-            },
-        )
-        .into_iter()
-        .filter(|(name, ..)| !options.skip_tables.contains(name))
-        .map(|(name, mut columns)| {
-            columns.sort_by(|a, b| a.position.cmp(&b.position));
-            Table {
-                name,
-                columns,
-                schema: options.schema.to_owned(),
+        .filter_map(|row| {
+            let table_name: String = row.get("table_name");
+            if !options.skip_tables.contains(&table_name) {
+                let table_size_s: String = row.get("table_size");
+                let table_size: u64 = table_size_s.parse().unwrap_or(0);
+                let table_column_names: Vec<&str> = row.get("table_column_names");
+                let table_column_nullables: Vec<bool> = row.get("table_columns_nullable");
+                let table_columns = (1..)
+                    .zip(table_column_names)
+                    .zip(table_column_nullables)
+                    .map(|((position, name), is_nullable)| Column {
+                        name: name.to_owned(),
+                        is_nullable,
+                        position,
+                    })
+                    .collect();
+                Some(Table {
+                    name: table_name,
+                    columns: table_columns,
+                    schema: options.schema.clone(),
+                    size: table_size,
+                })
+            } else {
+                None
             }
         })
         .collect();
