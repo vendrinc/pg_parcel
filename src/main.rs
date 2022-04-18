@@ -111,8 +111,9 @@ impl Table {
             return query;
         }
         let mut query = format!(
-            "select {} from {}",
+            "select {} from {}.{}",
             &self.column_list(),
+            &self.schema.sql_identifier(),
             &self.name.sql_identifier()
         );
         if let Some(org_scope) = self
