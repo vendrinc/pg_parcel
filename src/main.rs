@@ -120,6 +120,7 @@ struct Table {
     columns: Vec<Column>,
     schema: String,
     size: u64, // Bytes.
+    rows: u64, // Estimate.
 }
 
 impl Table {
@@ -191,13 +192,19 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
         select
           tables.table_name,
           pg_total_relation_size(tables.table_schema || '.' || tables.table_name)::text as table_size,
-          array_agg(columns.column_name::text order by columns.ordinal_position) as table_column_names,
-          array_agg(columns.is_nullable = 'YES' order by columns.ordinal_position) as table_columns_nullable
+          max(pg_class.reltuples::int8)::text as table_rows, -- https://wiki.postgresql.org/wiki/Count_estimate
+          array_agg(columns.column_name::text order by columns.ordinal_position) as column_names,
+          array_agg(columns.is_nullable = 'YES' order by columns.ordinal_position) as column_nullables
         from information_schema.tables
         join information_schema.columns on (
           columns.table_catalog = tables.table_catalog
           and columns.table_schema = tables.table_schema
           and columns.table_name = tables.table_name)
+        join pg_namespace on (
+          pg_namespace.nspname = tables.table_schema)
+        join pg_class on (
+          pg_class.relnamespace = pg_namespace.oid
+          and pg_class.relname = tables.table_name)
         where tables.table_schema = {schema}
         and tables.table_type = 'BASE TABLE'
         group by tables.table_schema, tables.table_name
@@ -213,11 +220,13 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
             if !options.skip_tables.contains(&table_name) {
                 let table_size_s: String = row.get("table_size");
                 let table_size: u64 = table_size_s.parse().unwrap_or(0);
-                let table_column_names: Vec<&str> = row.get("table_column_names");
-                let table_column_nullables: Vec<bool> = row.get("table_columns_nullable");
-                let table_columns = (1..)
-                    .zip(table_column_names)
-                    .zip(table_column_nullables)
+                let table_rows_s: String = row.get("table_rows");
+                let table_rows: u64 = table_rows_s.parse().unwrap_or(0);
+                let column_names: Vec<&str> = row.get("column_names");
+                let column_nullables: Vec<bool> = row.get("column_nullables");
+                let columns = (1..)
+                    .zip(column_names)
+                    .zip(column_nullables)
                     .map(|((position, name), is_nullable)| Column {
                         name: name.to_owned(),
                         is_nullable,
@@ -226,9 +235,10 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
                     .collect();
                 Some(Table {
                     name: table_name,
-                    columns: table_columns,
+                    columns,
                     schema: options.schema.clone(),
                     size: table_size,
+                    rows: table_rows,
                 })
             } else {
                 None
