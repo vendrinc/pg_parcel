@@ -21,10 +21,6 @@ struct Args {
     #[clap(short, long)]
     id: String,
 
-    /// Tables with this column name will only include rows with the value specified by <ID>
-    #[clap(short, long)]
-    column_name: Option<String>,
-
     /// Configuration file
     #[clap(short, long)]
     #[clap(default_value_t = String::from("./pg_parcel.toml"))]
@@ -56,11 +52,7 @@ impl Options {
         let args = Args::parse();
         let file = InputFile::load(Path::new(&args.file))?;
         let options = Options {
-            column_name: if let Some(column_name) = args.column_name {
-                column_name
-            } else {
-                file.column_name
-            },
+            column_name: file.column_name,
             column_value: args.id,
             database_url: file.database_url,
             schema: file.schema_name,
