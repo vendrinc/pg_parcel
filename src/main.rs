@@ -243,7 +243,7 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
         r#"
         select
           tables.table_name,
-          pg_total_relation_size(tables.table_schema || '.' || tables.table_name)::text as table_size,
+          pg_total_relation_size(pg_class.oid)::text as table_size,
           max(pg_class.reltuples::int8)::text as table_rows, -- https://wiki.postgresql.org/wiki/Count_estimate
           array_agg(columns.column_name::text order by columns.ordinal_position) as column_names,
           array_agg(columns.is_nullable = 'YES' order by columns.ordinal_position) as column_nullables
@@ -259,8 +259,8 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
           and pg_class.relname = tables.table_name)
         where tables.table_schema = {schema}
         and tables.table_type = 'BASE TABLE'
-        group by tables.table_schema, tables.table_name
-        order by tables.table_schema, tables.table_name
+        group by tables.table_name, pg_class.oid
+        order by tables.table_name
         "#,
         schema = options.schema.sql_value(),
     );
