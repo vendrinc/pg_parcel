@@ -17,14 +17,14 @@ use std::path::Path;
 #[clap(author, version, about, long_about = None)]
 /// Command line arguments
 struct Args {
-    /// Dump only columns where column_name is this value
-    #[clap(short, long)]
-    id: String,
-
     /// Configuration file
-    #[clap(short, long)]
+    #[clap(short, long, display_order = 1)]
     #[clap(default_value_t = String::from("./pg_parcel.toml"))]
     file: String,
+
+    /// Dump only columns where `column_name` is this value
+    #[clap(short, long, display_order = 2)]
+    id: String,
 
     /// Prints a report estimating row count and size of the data to be dumped
     /// for each table, and in total. Does not dump table data.
@@ -32,7 +32,7 @@ struct Args {
     /// Note that the figures reported may be well off the mark, especially the
     /// estimated size of the dump, but they should be off the mark by a roughly
     /// constant factor.
-    #[clap(long)]
+    #[clap(long, display_order = 10)]
     estimate_only: bool,
 }
 
