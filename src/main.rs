@@ -10,7 +10,7 @@ use sql_string::SqlString;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::error::Error;
-use std::io::Read;
+use std::io::Write;
 use std::path::Path;
 
 #[derive(Parser, Debug)]
@@ -25,9 +25,19 @@ struct Args {
     #[clap(short, long)]
     column_name: Option<String>,
 
+    /// Configuration file
     #[clap(short, long)]
     #[clap(default_value_t = String::from("./pg_parcel.toml"))]
     file: String,
+
+    /// Prints a report estimating row count and size of the data to be dumped
+    /// for each table, and in total. Does not dump table data.
+    ///
+    /// Note that the figures reported may be well off the mark, especially the
+    /// estimated size of the dump, but they should be off the mark by a roughly
+    /// constant factor.
+    #[clap(long)]
+    estimate_only: bool,
 }
 
 /// Options here is a combination of command line arguments and contents of the slicefile.
@@ -38,6 +48,7 @@ struct Options {
     database_url: String,
     skip_tables: HashSet<String>,
     overrides: HashMap<String, String>,
+    estimate_only: bool,
 }
 
 impl Options {
@@ -55,6 +66,7 @@ impl Options {
             schema: file.schema_name,
             skip_tables: file.skip_tables.unwrap_or_default(),
             overrides: file.overrides.unwrap_or_default(),
+            estimate_only: args.estimate_only,
         };
         Ok(options)
     }
@@ -64,39 +76,104 @@ fn main() -> Result<(), Box<dyn Error>> {
     let options = Options::load()?;
     let mut client = Client::connect(&options.database_url, NoTls)?;
 
-    client
-        .query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])
-        .unwrap();
+    // Restrict `search_path` to just the one schema.
+    client.execute(&format!("SET SCHEMA {}", options.schema.sql_value()), &[])?;
+    client.execute("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])?;
 
     let tables = get_tables(&options)?;
 
     let pb = ProgressBar::new(tables.len() as u64);
-    pb.set_style(
-        ProgressStyle::default_bar().template("{msg:>30.bold} {spinner} {wide_bar} eta {eta}"),
+    let pb_template = format!(
+        "{{msg:>{width}.bold}} {{spinner}} {{wide_bar}} eta {{eta}} ",
+        width = tables
+            .iter()
+            .map(|table| table.name.len())
+            .max()
+            .unwrap_or(30)
     );
+    pb.set_style(ProgressStyle::default_bar().template(&pb_template));
     pb.enable_steady_tick(250);
 
-    for table in tables.iter() {
-        let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
-        pb.set_message(table.name.to_owned());
-        let mut reader = client.copy_out(&copy_statement)?;
-        let mut buf = vec![];
-        reader.read_to_end(&mut buf)?;
-        println!("{};", table.copy_in_query());
-        println!("{}\\.", std::str::from_utf8(&buf)?);
-        pb.inc(1);
-    }
-    pb.finish_with_message(format!("Dumped {} tables", tables.len()));
+    if options.estimate_only {
+        let mut total_size: u64 = 0; // Estimate in kibibytes.
 
-    client.query("ROLLBACK", &[]).unwrap();
+        pb.println("        Rows / Total |         |  Size estimate | Table name");
+        for table in tables.iter() {
+            let count_statement = format!(
+                // The `postgres` crate does not define `FromSql for u64` (or
+                // usize, or u128), so it would appear that the only safe way to
+                // query a PostgreSQL `int8` is as text.
+                "SELECT COUNT(*)::text FROM ({}) AS query",
+                table.copy_out_query(&options)
+            );
+            pb.set_message(table.name.to_owned());
+            let row_count_s: String = client.query_one(&count_statement, &[])?.get(0);
+            let row_count: u64 = row_count_s.parse()?;
+            let row_selectivity = (100f64 * row_count as f64 / table.rows as f64)
+                .max(0.0) // Deal with NAN.
+                .clamp(0.0, 100.0);
+            let size_estimate = ((row_count as f64 * table.size as f64)
+                / (table.rows as f64 * 1024f64))
+                .max(0.0) as u64; // Deal with NAN.
+            pb.println(format!(
+                "{row_frac:>20} | {row_selectivity:>6.2}% | {size_estimate:10.0} kiB | {name}",
+                row_frac = format!("{row_count} of {rows_total}", rows_total = table.rows),
+                name = table.name
+            ));
+            pb.inc(1);
+            total_size += size_estimate;
+        }
+        pb.finish_with_message(format!("Total size estimated at: {total_size} kiB"));
+    } else {
+        let mut sizes: Vec<(String, u64)> = Vec::with_capacity(tables.len());
+
+        // Dump table data.
+        for table in tables.iter() {
+            let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
+            pb.set_message(table.name.to_owned());
+
+            let mut stdout = std::io::stdout();
+            writeln!(stdout, "{};", table.copy_in_query())?;
+            let mut reader = client.copy_out(&copy_statement)?;
+            let size = std::io::copy(&mut reader, &mut stdout)?;
+            sizes.push((table.name.clone(), size));
+            writeln!(stdout, "\\.")?;
+
+            pb.inc(1);
+        }
+
+        // Summarize table sizes. Append the report to the dump as SQL comments.
+        {
+            let total = sizes.iter().map(|(.., size)| *size).sum::<u64>();
+            if total > 0 {
+                let mut stdout = std::io::stdout();
+                writeln!(stdout)?;
+                writeln!(stdout, "-- SUMMARY ---------------------------------")?;
+                writeln!(stdout, "--        Bytes | % of total | Table name")?;
+                writeln!(stdout, "-- -----------------------------------------")?;
+                sizes.sort_by_key(|(.., size)| *size);
+                for (name, size) in sizes.iter() {
+                    let percent = ((*size as f64) * 100f64) / (total as f64);
+                    writeln!(stdout, "-- {size:12} | {percent:9.1}% | {name}")?;
+                }
+            }
+        }
+
+        pb.finish_with_message(format!("Dumped {} tables", tables.len()));
+    }
+
+    client.query("ROLLBACK", &[])?;
 
     Ok(())
 }
+
 #[derive(Debug, Clone)]
 struct Table {
     name: String,
     columns: Vec<Column>,
     schema: String,
+    size: u64, // Bytes.
+    rows: u64, // Estimate.
 }
 
 impl Table {
@@ -158,7 +235,6 @@ impl Table {
 struct Column {
     pub name: String,
     pub is_nullable: bool,
-    pub position: i32,
 }
 
 fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
@@ -166,49 +242,54 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
     let query = format!(
         r#"
         select
-            columns.table_name,
-            columns.column_name,
-            case columns.is_nullable when 'YES' then True else False end as is_nullable,
-            columns.ordinal_position
-        from information_schema.columns
-        join information_schema.tables on (
-            tables.table_catalog = columns.table_catalog
-            and tables.table_schema = columns.table_schema
-            and tables.table_name = columns.table_name)
-        where columns.table_schema = {schema}
+          tables.table_name,
+          pg_total_relation_size(pg_class.oid)::text as table_size,
+          max(pg_class.reltuples::int8)::text as table_rows, -- https://wiki.postgresql.org/wiki/Count_estimate
+          array_agg(columns.column_name::text order by columns.ordinal_position) as column_names,
+          array_agg(columns.is_nullable = 'YES' order by columns.ordinal_position) as column_nullables
+        from information_schema.tables
+        join information_schema.columns on (
+          columns.table_catalog = tables.table_catalog
+          and columns.table_schema = tables.table_schema
+          and columns.table_name = tables.table_name)
+        join pg_namespace on (
+          pg_namespace.nspname = tables.table_schema)
+        join pg_class on (
+          pg_class.relnamespace = pg_namespace.oid
+          and pg_class.relname = tables.table_name)
+        where tables.table_schema = {schema}
         and tables.table_type = 'BASE TABLE'
-        order by columns.table_name, columns.ordinal_position
+        group by tables.table_name, pg_class.oid
+        order by tables.table_name
         "#,
         schema = options.schema.sql_value(),
     );
     let mut tables: Vec<Table> = client
         .query(&query, &[])?
         .into_iter()
-        .fold(
-            HashMap::new(),
-            |mut acc: HashMap<String, Vec<Column>>, row| {
-                let table_name: &str = row.get("table_name");
-                let column = Column {
-                    name: row.get("column_name"),
-                    is_nullable: row.get("is_nullable"),
-                    position: row.get("ordinal_position"),
-                };
-                if let Some(columns) = acc.get_mut(table_name) {
-                    columns.push(column)
-                } else {
-                    acc.insert(table_name.to_owned(), vec![column]);
-                }
-                acc
-            },
-        )
-        .into_iter()
-        .filter(|(name, ..)| !options.skip_tables.contains(name))
-        .map(|(name, mut columns)| {
-            columns.sort_by(|a, b| a.position.cmp(&b.position));
-            Table {
-                name,
-                columns,
-                schema: options.schema.to_owned(),
+        .filter_map(|row| {
+            let table_name: String = row.get("table_name");
+            if !options.skip_tables.contains(&table_name) {
+                let table_size_s: String = row.get("table_size");
+                let table_size: u64 = table_size_s.parse().unwrap_or(0);
+                let table_rows_s: String = row.get("table_rows");
+                let table_rows: u64 = table_rows_s.parse().unwrap_or(0);
+                let column_names: Vec<String> = row.get("column_names");
+                let column_nullables: Vec<bool> = row.get("column_nullables");
+                let columns = column_names
+                    .into_iter()
+                    .zip(column_nullables)
+                    .map(|(name, is_nullable)| Column { name, is_nullable })
+                    .collect();
+                Some(Table {
+                    name: table_name,
+                    columns,
+                    schema: options.schema.clone(),
+                    size: table_size,
+                    rows: table_rows,
+                })
+            } else {
+                None
             }
         })
         .collect();
