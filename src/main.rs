@@ -17,18 +17,25 @@ use std::path::Path;
 #[clap(author, version, about, long_about = None)]
 /// Command line arguments
 struct Args {
-    /// Dump only columns where column_name is this value
-    #[clap(short, long)]
-    id: String,
-
-    /// Tables with this column name will only include rows with the value specified by <ID>
-    #[clap(short, long)]
-    column_name: Option<String>,
-
     /// Configuration file
-    #[clap(short, long)]
+    #[clap(short, long, display_order = 1)]
     #[clap(default_value_t = String::from("./pg_parcel.toml"))]
     file: String,
+
+    /// Dump only columns where `column_name` is this value
+    #[clap(short, long, display_order = 2)]
+    id: String,
+
+    /// Insert a `TRUNCATE` command before any `COPY` commands.
+    ///
+    /// This will truncate every table found in the schema *except* those that
+    /// are explicitly skipped, *without* cascading. If a table included in the
+    /// dump is referenced by a foreign key from a skipped table, this injected
+    /// `TRUNCATE` command will likely fail. Should this happen, instead of
+    /// skipping a table, include it with an override query containing a `WHERE
+    /// false` condition.
+    #[clap(long, display_order = 3)]
+    truncate: bool,
 
     /// Prints a report estimating row count and size of the data to be dumped
     /// for each table, and in total. Does not dump table data.
@@ -36,7 +43,7 @@ struct Args {
     /// Note that the figures reported may be well off the mark, especially the
     /// estimated size of the dump, but they should be off the mark by a roughly
     /// constant factor.
-    #[clap(long)]
+    #[clap(long, display_order = 10)]
     estimate_only: bool,
 }
 
@@ -49,6 +56,7 @@ struct Options {
     skip_tables: HashSet<String>,
     overrides: HashMap<String, String>,
     estimate_only: bool,
+    truncate: bool,
 }
 
 impl Options {
@@ -56,17 +64,14 @@ impl Options {
         let args = Args::parse();
         let file = InputFile::load(Path::new(&args.file))?;
         let options = Options {
-            column_name: if let Some(column_name) = args.column_name {
-                column_name
-            } else {
-                file.column_name
-            },
+            column_name: file.column_name,
             column_value: args.id,
             database_url: file.database_url,
             schema: file.schema_name,
             skip_tables: file.skip_tables.unwrap_or_default(),
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
+            truncate: args.truncate,
         };
         Ok(options)
     }
@@ -127,9 +132,30 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else {
         let mut sizes: Vec<(String, u64)> = Vec::with_capacity(tables.len());
 
+        // Truncate tables first. There can be foreign key relationships between
+        // tables so either we need to truncate all tables now or we need to
+        // truncate with cascade as we go along, but we can't do the latter
+        // because we might truncate tables we've only just populated.
+        if options.truncate {
+            writeln!(
+                std::io::stdout(),
+                "TRUNCATE TABLE\n  {}\n;",
+                // `iter_intersperse` is an unstable feature in the standard
+                // library. When it stabilises, we can remove `itertools` and
+                // just chain into `Iterator.intersperse` instead.
+                itertools::Itertools::intersperse(
+                    tables.iter().map(Table::sql_identifier),
+                    ",\n  ".to_owned()
+                )
+                .collect::<String>()
+            )?;
+        }
+
         // Dump table data.
         for table in tables.iter() {
-            let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
+            let query = table.copy_out_query(&options);
+            // let query = format!("{query} LIMIT 10"); // TESTING ONLY
+            let copy_statement = format!("COPY ({}) TO stdout;", query);
             pb.set_message(table.name.to_owned());
 
             let mut stdout = std::io::stdout();
@@ -177,42 +203,44 @@ struct Table {
 }
 
 impl Table {
+    fn sql_identifier(&self) -> String {
+        format!(
+            "{}.{}",
+            self.schema.sql_identifier(),
+            self.name.sql_identifier()
+        )
+    }
     fn copy_out_query(&self, options: &Options) -> String {
         if let Some(query) = options.overrides.get(&self.name) {
             lazy_static! {
-                static ref RE: Regex = Regex::new(":id").unwrap();
+                static ref RE: Regex = Regex::new(r":id\b").unwrap();
             }
-            let query = RE
-                .replace_all(query, &options.column_value.sql_value())
-                .to_string();
-            return query;
-        }
-        let mut query = format!(
-            "select {} from {}.{}",
-            &self.column_list(),
-            &self.schema.sql_identifier(),
-            &self.name.sql_identifier()
-        );
-        if let Some(org_scope) = self
-            .columns
-            .iter()
-            .find(|column| column.name == options.column_name)
-        {
-            let mut where_clause = format!(
-                "{column} = {id}",
-                column = options.column_name.sql_identifier(),
-                id = options.column_value.sql_value()
+            RE.replace_all(query, &options.column_value.sql_value())
+                .to_string()
+        } else {
+            let query = format!(
+                "SELECT {} FROM {}",
+                &self.column_list(),
+                &self.sql_identifier()
             );
-            if org_scope.is_nullable {
-                where_clause = format!(
-                    "({where_clause} or {column} is null)",
-                    column = options.column_name.sql_identifier()
-                )
+            if let Some(scope_column) = self
+                .columns
+                .iter()
+                .find(|column| column.name == options.column_name)
+            {
+                let column_ident = options.column_name.sql_identifier();
+                let column_value = options.column_value.sql_value();
+                if scope_column.is_nullable {
+                    format!(
+                        "{query} WHERE {column_ident} = {column_value} OR {column_ident} IS NULL"
+                    )
+                } else {
+                    format!("{query} WHERE {column_ident} = {column_value}")
+                }
+            } else {
+                query
             }
-            query = format!("{query} where {where_clause}");
         }
-        // query = format!("{query} limit 10");
-        query
     }
     fn copy_in_query(&self) -> String {
         format!(

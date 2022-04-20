@@ -1,22 +1,23 @@
 [package]
-name = "pg_parcel"
-description = "Dump horizontal slices from PostgreSQL schemas. Like if pg_dump had a --where option."
-keywords = ["postgresql"]
-categories = ["command-line-utilities"]
 authors = ["Jacob Elder"]
-version = "0.3.2"
+categories = ["command-line-utilities"]
+description = "Dump horizontal slices from PostgreSQL schemas. Like if pg_dump had a --where option."
 edition = "2021"
-repository = "https://github.com/Blissfully/pg_parcel"
-license = "MIT OR Apache-2.0"
 exclude = ["screenshots", ".vscode", "release.sh", "Brewfile", ".github"]
+keywords = ["postgresql"]
+license = "MIT OR Apache-2.0"
+name = "pg_parcel"
+repository = "https://github.com/Blissfully/pg_parcel"
+version = "0.3.2"
 
 [dependencies]
-postgres = { version = "0.19.2", features = ["array-impls"] }
-lazy_static = "1.4.0"
+clap = {version = "3.1.5", features = ["derive", "wrap_help"]}
 dialoguer = "0.10.0"
 indicatif = "0.16.2"
-clap = { version = "3.1.5", features = ["derive", "wrap_help"] }
-toml = "0.5.8"
+itertools = "0.10.3"
+lazy_static = "1.4.0"
+postgres = {version = "0.19.2", features = ["array-impls"]}
+regex = "1"
 serde = "1.0"
 serde_derive = "1.0.136"
-regex = "1"
+toml = "0.5.8"
