@@ -26,6 +26,17 @@ struct Args {
     #[clap(short, long, display_order = 2)]
     id: String,
 
+    /// Insert a `TRUNCATE` command before any `COPY` commands.
+    ///
+    /// This will truncate every table found in the schema *except* those that
+    /// are explicitly skipped, *without* cascading. If a table included in the
+    /// dump is referenced by a foreign key from a skipped table, this injected
+    /// `TRUNCATE` command will likely fail. Should this happen, instead of
+    /// skipping a table, include it with an override query containing a `WHERE
+    /// false` condition.
+    #[clap(long, display_order = 3)]
+    truncate: bool,
+
     /// Prints a report estimating row count and size of the data to be dumped
     /// for each table, and in total. Does not dump table data.
     ///
@@ -45,6 +56,7 @@ struct Options {
     skip_tables: HashSet<String>,
     overrides: HashMap<String, String>,
     estimate_only: bool,
+    truncate: bool,
 }
 
 impl Options {
@@ -59,6 +71,7 @@ impl Options {
             skip_tables: file.skip_tables.unwrap_or_default(),
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
+            truncate: args.truncate,
         };
         Ok(options)
     }
@@ -119,9 +132,30 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else {
         let mut sizes: Vec<(String, u64)> = Vec::with_capacity(tables.len());
 
+        // Truncate tables first. There can be foreign key relationships between
+        // tables so either we need to truncate all tables now or we need to
+        // truncate with cascade as we go along, but we can't do the latter
+        // because we might truncate tables we've only just populated.
+        if options.truncate {
+            writeln!(
+                std::io::stdout(),
+                "TRUNCATE TABLE\n  {}\n;",
+                // `iter_intersperse` is an unstable feature in the standard
+                // library. When it stabilises, we can remove `itertools` and
+                // just chain into `Iterator.intersperse` instead.
+                itertools::Itertools::intersperse(
+                    tables.iter().map(Table::sql_identifier),
+                    ",\n  ".to_owned()
+                )
+                .collect::<String>()
+            )?;
+        }
+
         // Dump table data.
         for table in tables.iter() {
-            let copy_statement = format!("COPY ({}) TO stdout;", table.copy_out_query(&options));
+            let query = table.copy_out_query(&options);
+            // let query = format!("{query} LIMIT 10"); // TESTING ONLY
+            let copy_statement = format!("COPY ({}) TO stdout;", query);
             pb.set_message(table.name.to_owned());
 
             let mut stdout = std::io::stdout();
