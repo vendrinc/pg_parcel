@@ -169,42 +169,44 @@ struct Table {
 }
 
 impl Table {
+    fn sql_identifier(&self) -> String {
+        format!(
+            "{}.{}",
+            self.schema.sql_identifier(),
+            self.name.sql_identifier()
+        )
+    }
     fn copy_out_query(&self, options: &Options) -> String {
         if let Some(query) = options.overrides.get(&self.name) {
             lazy_static! {
-                static ref RE: Regex = Regex::new(":id").unwrap();
+                static ref RE: Regex = Regex::new(r":id\b").unwrap();
             }
-            let query = RE
-                .replace_all(query, &options.column_value.sql_value())
-                .to_string();
-            return query;
-        }
-        let mut query = format!(
-            "select {} from {}.{}",
-            &self.column_list(),
-            &self.schema.sql_identifier(),
-            &self.name.sql_identifier()
-        );
-        if let Some(org_scope) = self
-            .columns
-            .iter()
-            .find(|column| column.name == options.column_name)
-        {
-            let mut where_clause = format!(
-                "{column} = {id}",
-                column = options.column_name.sql_identifier(),
-                id = options.column_value.sql_value()
+            RE.replace_all(query, &options.column_value.sql_value())
+                .to_string()
+        } else {
+            let query = format!(
+                "SELECT {} FROM {}",
+                &self.column_list(),
+                &self.sql_identifier()
             );
-            if org_scope.is_nullable {
-                where_clause = format!(
-                    "({where_clause} or {column} is null)",
-                    column = options.column_name.sql_identifier()
-                )
+            if let Some(scope_column) = self
+                .columns
+                .iter()
+                .find(|column| column.name == options.column_name)
+            {
+                let column_ident = options.column_name.sql_identifier();
+                let column_value = options.column_value.sql_value();
+                if scope_column.is_nullable {
+                    format!(
+                        "{query} WHERE {column_ident} = {column_value} OR {column_ident} IS NULL"
+                    )
+                } else {
+                    format!("{query} WHERE {column_ident} = {column_value}")
+                }
+            } else {
+                query
             }
-            query = format!("{query} where {where_clause}");
         }
-        // query = format!("{query} limit 10");
-        query
     }
     fn copy_in_query(&self) -> String {
         format!(
