@@ -139,7 +139,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         if options.truncate {
             writeln!(
                 std::io::stdout(),
-                "TRUNCATE TABLE\n  {}\n;",
+                "TRUNCATE TABLE\n  {}\nCASCADE;",
                 // `iter_intersperse` is an unstable feature in the standard
                 // library. When it stabilises, we can remove `itertools` and
                 // just chain into `Iterator.intersperse` instead.
