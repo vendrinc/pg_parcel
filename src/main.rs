@@ -279,7 +279,9 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
         join information_schema.columns on (
           columns.table_catalog = tables.table_catalog
           and columns.table_schema = tables.table_schema
-          and columns.table_name = tables.table_name)
+          and columns.table_name = tables.table_name
+          and columns.is_generated = 'NEVER'
+        )
         join pg_namespace on (
           pg_namespace.nspname = tables.table_schema)
         join pg_class on (
