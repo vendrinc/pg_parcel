@@ -12,6 +12,7 @@ use std::collections::HashSet;
 use std::error::Error;
 use std::io::Write;
 use std::path::Path;
+use std::time::Duration;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -89,15 +90,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let pb = ProgressBar::new(tables.len() as u64);
     let pb_template = format!(
-        "{{msg:>{width}.bold}} {{spinner}} {{wide_bar}} eta {{eta}} ",
+        "{{msg:>{width}.bold}} {{spinner:.blue/white}} {{wide_bar:.blue/white}} eta {{eta}}",
         width = tables
             .iter()
             .map(|table| table.name.len())
             .max()
             .unwrap_or(30)
     );
-    pb.set_style(ProgressStyle::default_bar().template(&pb_template));
-    pb.enable_steady_tick(250);
+    pb.set_style(
+        ProgressStyle::with_template(&pb_template)
+            .unwrap()
+            .progress_chars("█▉▊▋▌▍▎▏  "),
+    );
+    pb.enable_steady_tick(Duration::from_millis(250));
 
     if options.estimate_only {
         let mut total_size: u64 = 0; // Estimate in kibibytes.
