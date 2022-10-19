@@ -9,7 +9,7 @@ use std::path::Path;
 pub struct InputFile {
     pub column_name: String,
     pub schema_name: String,
-    pub database_url: String,
+    pub database_url: Option<String>,
     pub skip_tables: Option<HashSet<String>>,
     pub overrides: Option<HashMap<String, String>>,
 }

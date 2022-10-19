@@ -27,6 +27,10 @@ struct Args {
     #[clap(short, long, display_order = 2)]
     id: String,
 
+    /// Override database URL in parcel config.
+    #[clap(long, display_order = 3)]
+    database_url: Option<String>,
+
     /// Insert a `TRUNCATE` command before any `COPY` commands.
     ///
     /// This will truncate every table found in the schema *except* those that
@@ -35,7 +39,7 @@ struct Args {
     /// `TRUNCATE` command will likely fail. Should this happen, instead of
     /// skipping a table, include it with an override query containing a `WHERE
     /// false` condition.
-    #[clap(long, display_order = 3)]
+    #[clap(long, display_order = 4)]
     truncate: bool,
 
     /// Prints a report estimating row count and size of the data to be dumped
@@ -67,7 +71,10 @@ impl Options {
         let options = Options {
             column_name: file.column_name,
             column_value: args.id,
-            database_url: file.database_url,
+            database_url: file
+                .database_url
+                .or(args.database_url)
+                .unwrap_or_else(|| "postgres://localhost:5432/postgres".to_string()),
             schema: file.schema_name,
             skip_tables: file.skip_tables.unwrap_or_default(),
             overrides: file.overrides.unwrap_or_default(),
