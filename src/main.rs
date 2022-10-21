@@ -4,7 +4,9 @@ use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use inputfile::InputFile;
 use lazy_static::lazy_static;
-use postgres::{Client, NoTls};
+use native_tls::TlsConnector;
+use postgres::Client;
+use postgres_native_tls::MakeTlsConnector;
 use regex::Regex;
 use sql_string::SqlString;
 use std::collections::HashMap;
@@ -58,6 +60,7 @@ struct Options {
     column_value: String,
     schema: String,
     database_url: String,
+    danger_accept_invalid_certs: bool,
     skip_tables: HashSet<String>,
     overrides: HashMap<String, String>,
     estimate_only: bool,
@@ -76,6 +79,7 @@ impl Options {
                 .or(args.database_url)
                 .unwrap_or_else(|| "postgres://localhost:5432/postgres".to_string()),
             schema: file.schema_name,
+            danger_accept_invalid_certs: file.danger_accept_invalid_certs.unwrap_or(false),
             skip_tables: file.skip_tables.unwrap_or_default(),
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
@@ -87,13 +91,20 @@ impl Options {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let options = Options::load()?;
-    let mut client = Client::connect(&options.database_url, NoTls)?;
+    let mut client = Client::connect(
+        &options.database_url,
+        MakeTlsConnector::new(
+            TlsConnector::builder()
+                .danger_accept_invalid_certs(options.danger_accept_invalid_certs)
+                .build()?,
+        ),
+    )?;
 
     // Restrict `search_path` to just the one schema.
     client.execute(&format!("SET SCHEMA {}", options.schema.sql_value()), &[])?;
     client.execute("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])?;
 
-    let tables = get_tables(&options)?;
+    let tables = get_tables(&options, &mut client)?;
 
     let pb = ProgressBar::new(tables.len() as u64);
     let pb_template = format!(
@@ -277,8 +288,7 @@ struct Column {
     pub is_nullable: bool,
 }
 
-fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
-    let mut client = Client::connect(&options.database_url, NoTls)?;
+fn get_tables(options: &Options, client: &mut Client) -> Result<Vec<Table>, Box<dyn Error>> {
     let query = format!(
         r#"
         select

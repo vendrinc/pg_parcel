@@ -11,12 +11,14 @@ repository = "https://github.com/Blissfully/pg_parcel"
 version = "0.4.3"
 
 [dependencies]
-clap = {version = "3.1.5", features = ["derive", "wrap_help"]}
+clap = { version = "3.1.5", features = ["derive", "wrap_help"] }
 dialoguer = "0.10.0"
 indicatif = "0.17.0"
 itertools = "0.10.3"
 lazy_static = "1.4.0"
-postgres = {version = "0.19.2", features = ["array-impls"]}
+native-tls = { version = "0.2.10", features = ["vendored"] }
+postgres = { version = "0.19.2", features = ["array-impls"] }
+postgres-native-tls = { version = "0.5.0" }
 regex = "1"
 serde = "1.0"
 serde_derive = "1.0.136"

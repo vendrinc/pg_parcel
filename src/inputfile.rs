@@ -10,6 +10,7 @@ pub struct InputFile {
     pub column_name: String,
     pub schema_name: String,
     pub database_url: Option<String>,
+    pub danger_accept_invalid_certs: Option<bool>,
     pub skip_tables: Option<HashSet<String>>,
     pub overrides: Option<HashMap<String, String>>,
 }
