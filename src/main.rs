@@ -3,6 +3,7 @@ mod sql_string;
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use inputfile::InputFile;
+use itertools::intersperse;
 use lazy_static::lazy_static;
 use postgres::{Client, NoTls};
 use regex::Regex;
@@ -23,9 +24,12 @@ struct Args {
     #[clap(default_value_t = String::from("./pg_parcel.toml"))]
     file: String,
 
-    /// Dump only columns where `column_name` is this value
-    #[clap(short, long, display_order = 2)]
-    id: String,
+    /// Dump only columns where `column_name` is one of these values.
+    ///
+    /// Multiple values can be specified by using this option more than once. At
+    /// least one value must be given.
+    #[clap(short, long, required = true, display_order = 2)]
+    id: Vec<String>,
 
     /// Override database URL in parcel config.
     #[clap(long, display_order = 3)]
@@ -55,7 +59,7 @@ struct Args {
 /// Options here is a combination of command line arguments and contents of the slicefile.
 struct Options {
     column_name: String,
-    column_value: String,
+    column_value: Vec<String>,
     schema: String,
     database_url: String,
     skip_tables: HashSet<String>,
@@ -223,11 +227,13 @@ impl Table {
         )
     }
     fn copy_out_query(&self, options: &Options) -> String {
+        let column_values = options.column_value.iter().map(|s| s.sql_value());
+        let column_value = intersperse(column_values, ",".to_string()).collect::<String>();
         if let Some(query) = options.overrides.get(&self.name) {
             lazy_static! {
-                static ref RE: Regex = Regex::new(r":id\b").unwrap();
+                static ref RE: Regex = Regex::new(r":ids\b").unwrap();
             }
-            RE.replace_all(query, &options.column_value.sql_value())
+            RE.replace_all(query, format!("({column_value})"))
                 .to_string()
         } else {
             let query = format!(
@@ -241,13 +247,10 @@ impl Table {
                 .find(|column| column.name == options.column_name)
             {
                 let column_ident = options.column_name.sql_identifier();
-                let column_value = options.column_value.sql_value();
                 if scope_column.is_nullable {
-                    format!(
-                        "{query} WHERE {column_ident} = {column_value} OR {column_ident} IS NULL"
-                    )
+                    format!("{query} WHERE {column_ident} IN ({column_value}) OR {column_ident} IS NULL")
                 } else {
-                    format!("{query} WHERE {column_ident} = {column_value}")
+                    format!("{query} WHERE {column_ident} IN ({column_value})")
                 }
             } else {
                 query
