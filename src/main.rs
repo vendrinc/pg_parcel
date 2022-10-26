@@ -29,8 +29,8 @@ struct Args {
     ///
     /// Multiple values can be specified by using this option more than once. At
     /// least one value must be given.
-    #[clap(short, long, required = true, display_order = 2)]
-    id: Vec<String>,
+    #[clap(name = "id", short, long, required = true, display_order = 2)]
+    ids: Vec<String>,
 
     /// Override database URL in parcel config.
     #[clap(long, display_order = 3)]
@@ -60,7 +60,7 @@ struct Args {
 /// Options here is a combination of command line arguments and contents of the slicefile.
 struct Options {
     column_name: String,
-    column_value: Vec<String>,
+    column_values: Vec<String>,
     schema: String,
     database_url: String,
     skip_tables: HashSet<String>,
@@ -75,7 +75,7 @@ impl Options {
         let file = InputFile::load(Path::new(&args.file))?;
         let options = Options {
             column_name: file.column_name,
-            column_value: args.id,
+            column_values: args.ids,
             database_url: file
                 .database_url
                 .or(args.database_url)
@@ -228,13 +228,13 @@ impl Table {
         )
     }
     fn copy_out_query(&self, options: &Options) -> String {
-        let column_values = options.column_value.iter().map(|s| s.sql_value());
-        let column_value = intersperse(column_values, ",".to_string()).collect::<String>();
+        let column_values = options.column_values.iter().map(|s| s.sql_value());
+        let column_values = intersperse(column_values, ",".to_string()).collect::<String>();
         if let Some(query) = options.overrides.get(&self.name) {
             lazy_static! {
                 static ref RE: Regex = Regex::new(r":id\b").unwrap();
             }
-            RE.replace_all(query, format!("ANY (ARRAY[{column_value}])"))
+            RE.replace_all(query, format!("ANY (ARRAY[{column_values}])"))
                 .to_string()
         } else {
             let query = format!(
@@ -251,9 +251,9 @@ impl Table {
                 let column_udt_name = &scope_column.udt_name;
 
                 if scope_column.is_nullable {
-                    format!("{query} WHERE {column_ident} = ANY (ARRAY[{column_value}] :: {column_udt_name}[]) OR {column_ident} IS NULL")
+                    format!("{query} WHERE {column_ident} = ANY (ARRAY[{column_values}] :: {column_udt_name}[]) OR {column_ident} IS NULL")
                 } else {
-                    format!("{query} WHERE {column_ident} = ANY (ARRAY[{column_value}] :: {column_udt_name}[])")
+                    format!("{query} WHERE {column_ident} = ANY (ARRAY[{column_values}] :: {column_udt_name}[])")
                 }
             } else {
                 query
