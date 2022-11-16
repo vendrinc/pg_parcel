@@ -4,7 +4,6 @@ use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use inputfile::InputFile;
 use itertools::intersperse;
-use itertools::multizip;
 use lazy_static::lazy_static;
 use postgres::{Client, NoTls};
 use regex::Regex;
@@ -232,9 +231,9 @@ impl Table {
         let column_values = intersperse(column_values, ",".to_string()).collect::<String>();
         if let Some(query) = options.overrides.get(&self.name) {
             lazy_static! {
-                static ref RE: Regex = Regex::new(r":id\b").unwrap();
+                static ref RE: Regex = Regex::new(r":ids\b").unwrap();
             }
-            RE.replace_all(query, format!("ANY (ARRAY[{column_values}])"))
+            RE.replace_all(query, format!("({column_values})"))
                 .to_string()
         } else {
             let query = format!(
@@ -248,12 +247,10 @@ impl Table {
                 .find(|column| column.name == options.column_name)
             {
                 let column_ident = options.column_name.sql_identifier();
-                let column_udt_name = &scope_column.udt_name;
-
                 if scope_column.is_nullable {
-                    format!("{query} WHERE {column_ident} = ANY (ARRAY[{column_values}] :: {column_udt_name}[]) OR {column_ident} IS NULL")
+                    format!("{query} WHERE {column_ident} IN ({column_values}) OR {column_ident} IS NULL")
                 } else {
-                    format!("{query} WHERE {column_ident} = ANY (ARRAY[{column_values}] :: {column_udt_name}[])")
+                    format!("{query} WHERE {column_ident} IN ({column_values})")
                 }
             } else {
                 query
@@ -281,7 +278,6 @@ impl Table {
 struct Column {
     pub name: String,
     pub is_nullable: bool,
-    pub udt_name: String,
 }
 
 fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
@@ -293,8 +289,7 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
           pg_total_relation_size(pg_class.oid)::text as table_size,
           max(pg_class.reltuples::int8)::text as table_rows, -- https://wiki.postgresql.org/wiki/Count_estimate
           array_agg(columns.column_name::text order by columns.ordinal_position) as column_names,
-          array_agg(columns.is_nullable = 'YES' order by columns.ordinal_position) as column_nullables,
-          array_agg(columns.udt_name :: text order by columns.ordinal_position) as column_udt_names
+          array_agg(columns.is_nullable = 'YES' order by columns.ordinal_position) as column_nullables
         from information_schema.tables
         join information_schema.columns on (
           columns.table_catalog = tables.table_catalog
@@ -326,13 +321,10 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
                 let table_rows: u64 = table_rows_s.parse().unwrap_or(0);
                 let column_names: Vec<String> = row.get("column_names");
                 let column_nullables: Vec<bool> = row.get("column_nullables");
-                let column_udt_names: Vec<String> = row.get("column_udt_names");
-                let columns = multizip((column_names, column_nullables, column_udt_names))
-                    .map(|(name, is_nullable, udt_name)| Column {
-                        name,
-                        is_nullable,
-                        udt_name,
-                    })
+                let columns = column_names
+                    .into_iter()
+                    .zip(column_nullables)
+                    .map(|(name, is_nullable)| Column { name, is_nullable })
                     .collect();
                 Some(Table {
                     name: table_name,
