@@ -1,3 +1,8 @@
 {
-  "recommendations": ["tamasfe.even-better-toml", "matklad.rust-analyzer", "serayuzgur.crates", "Gruntfuggly.todo-tree"]
+  "recommendations": [
+    "tamasfe.even-better-toml",
+    "serayuzgur.crates",
+    "gruntfuggly.todo-tree",
+    "rust-lang.rust-analyzer"
+  ]
 }

@@ -16,7 +16,7 @@ pub struct InputFile {
 
 impl InputFile {
     pub fn load(path: &Path) -> Result<InputFile, Box<dyn Error>> {
-        let string = fs::read_to_string(&path).expect("Need a pg_parcel.toml file to continue");
+        let string = fs::read_to_string(path).expect("Need a pg_parcel.toml file to continue");
         let inputfile: InputFile = toml::from_str(&string)?;
         Ok(inputfile)
     }
