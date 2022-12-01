@@ -16,7 +16,9 @@ dialoguer = "0.10.0"
 indicatif = "0.17.0"
 itertools = "0.10.3"
 lazy_static = "1.4.0"
-postgres = {version = "0.19.2", features = ["array-impls"]}
+postgres = {version = "0.19.4", features = ["array-impls"]}
+native-tls = "0.2.10"
+postgres-native-tls = "0.5.0"
 regex = "1"
 serde = "1.0"
 serde_derive = "1.0.136"
