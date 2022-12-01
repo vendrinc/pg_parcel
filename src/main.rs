@@ -5,7 +5,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use inputfile::InputFile;
 use lazy_static::lazy_static;
 use native_tls::TlsConnector;
-use postgres::{Client};
+use postgres::Client;
 use postgres_native_tls::MakeTlsConnector;
 use regex::Regex;
 use sql_string::SqlString;
