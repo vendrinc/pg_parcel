@@ -4,7 +4,9 @@ use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use inputfile::InputFile;
 use lazy_static::lazy_static;
-use postgres::{Client, NoTls};
+use native_tls::TlsConnector;
+use postgres::Client;
+use postgres_native_tls::MakeTlsConnector;
 use regex::Regex;
 use sql_string::SqlString;
 use std::collections::HashMap;
@@ -85,9 +87,18 @@ impl Options {
     }
 }
 
+fn pg_client(options: &Options) -> Result<Client, postgres::Error> {
+    let connector = TlsConnector::builder()
+        .danger_accept_invalid_certs(true)
+        .build()
+        .unwrap();
+    let connector = MakeTlsConnector::new(connector);
+    Client::connect(&options.database_url, connector)
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let options = Options::load()?;
-    let mut client = Client::connect(&options.database_url, NoTls)?;
+    let mut client = pg_client(&options)?;
 
     // Restrict `search_path` to just the one schema.
     client.execute(&format!("SET SCHEMA {}", options.schema.sql_value()), &[])?;
@@ -278,7 +289,7 @@ struct Column {
 }
 
 fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
-    let mut client = Client::connect(&options.database_url, NoTls)?;
+    let mut client = pg_client(options)?;
     let query = format!(
         r#"
         select
