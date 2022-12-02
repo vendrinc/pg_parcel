@@ -97,7 +97,7 @@ fn pg_client(options: &Options) -> Result<Client, Box<dyn Error>> {
                 _end_entity: &rustls::Certificate,
                 _intermediates: &[rustls::Certificate],
                 _server_name: &rustls::ServerName,
-                _scts: &mut dyn Iterator<Item=&[u8]>,
+                _scts: &mut dyn Iterator<Item = &[u8]>,
                 _ocsp_response: &[u8],
                 _now: std::time::SystemTime,
             ) -> Result<rustls::client::ServerCertVerified, rustls::Error> {
@@ -191,7 +191,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     tables.iter().map(Table::sql_identifier),
                     ",\n  ".to_owned(),
                 )
-                    .collect::<String>()
+                .collect::<String>()
             )?;
         }
 
