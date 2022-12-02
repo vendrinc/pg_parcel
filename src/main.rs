@@ -87,13 +87,12 @@ impl Options {
     }
 }
 
-fn pg_client(options: &Options) -> Result<Client, postgres::Error> {
+fn pg_client(options: &Options) -> Result<Client, Box<dyn Error>> {
     let connector = TlsConnector::builder()
         .danger_accept_invalid_certs(true)
-        .build()
-        .unwrap();
+        .build()?;
     let connector = MakeTlsConnector::new(connector);
-    Client::connect(&options.database_url, connector)
+    Ok(Client::connect(&options.database_url, connector)?)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
