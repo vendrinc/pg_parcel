@@ -1,12 +1,11 @@
 mod inputfile;
 mod sql_string;
+
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use inputfile::InputFile;
 use lazy_static::lazy_static;
-use native_tls::TlsConnector;
 use postgres::Client;
-use postgres_native_tls::MakeTlsConnector;
 use regex::Regex;
 use sql_string::SqlString;
 use std::collections::HashMap;
@@ -14,6 +13,7 @@ use std::collections::HashSet;
 use std::error::Error;
 use std::io::Write;
 use std::path::Path;
+use std::sync::Arc;
 use std::time::Duration;
 
 #[derive(Parser, Debug)]
@@ -60,6 +60,7 @@ struct Options {
     column_value: String,
     schema: String,
     database_url: String,
+    accept_invalid_certs: bool,
     skip_tables: HashSet<String>,
     overrides: HashMap<String, String>,
     estimate_only: bool,
@@ -78,6 +79,7 @@ impl Options {
                 .or(args.database_url)
                 .unwrap_or_else(|| "postgres://localhost:5432/postgres".to_string()),
             schema: file.schema_name,
+            accept_invalid_certs: file.accept_invalid_certs.unwrap_or(false),
             skip_tables: file.skip_tables.unwrap_or_default(),
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
@@ -88,11 +90,35 @@ impl Options {
 }
 
 fn pg_client(options: &Options) -> Result<Client, Box<dyn Error>> {
-    let connector = TlsConnector::builder()
-        .danger_accept_invalid_certs(true)
-        .build()?;
-    let connector = MakeTlsConnector::new(connector);
-    Ok(Client::connect(&options.database_url, connector)?)
+    mod danger {
+        pub struct NoCertificateVerification {}
+
+        impl rustls::client::ServerCertVerifier for NoCertificateVerification {
+            fn verify_server_cert(
+                &self,
+                _end_entity: &rustls::Certificate,
+                _intermediates: &[rustls::Certificate],
+                _server_name: &rustls::ServerName,
+                _scts: &mut dyn Iterator<Item = &[u8]>,
+                _ocsp_response: &[u8],
+                _now: std::time::SystemTime,
+            ) -> Result<rustls::client::ServerCertVerified, rustls::Error> {
+                Ok(rustls::client::ServerCertVerified::assertion())
+            }
+        }
+    }
+
+    let mut config = rustls::ClientConfig::builder()
+        .with_safe_defaults()
+        .with_root_certificates(rustls::RootCertStore::empty())
+        .with_no_client_auth();
+    if options.accept_invalid_certs {
+        config
+            .dangerous()
+            .set_certificate_verifier(Arc::new(danger::NoCertificateVerification {}));
+    }
+    let tls = tokio_postgres_rustls::MakeRustlsConnect::new(config);
+    Ok(Client::connect(&options.database_url, tls)?)
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -167,7 +193,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 // just chain into `Iterator.intersperse` instead.
                 itertools::Itertools::intersperse(
                     tables.iter().map(Table::sql_identifier),
-                    ",\n  ".to_owned()
+                    ",\n  ".to_owned(),
                 )
                 .collect::<String>()
             )?;
