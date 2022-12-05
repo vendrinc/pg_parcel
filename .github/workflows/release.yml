@@ -79,7 +79,7 @@ jobs:
 
   build-linux:
     name: Build Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Install dev tools
         run: | 
@@ -106,7 +106,7 @@ jobs:
   create-release:
     name: Create release
     needs: [macos-universal, build-linux]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/download-artifact@v2
         with:
