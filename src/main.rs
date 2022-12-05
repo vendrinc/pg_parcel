@@ -60,6 +60,7 @@ struct Options {
     column_value: String,
     schema: String,
     database_url: String,
+    accept_invalid_certs: bool,
     skip_tables: HashSet<String>,
     overrides: HashMap<String, String>,
     estimate_only: bool,
@@ -78,6 +79,7 @@ impl Options {
                 .or(args.database_url)
                 .unwrap_or_else(|| "postgres://localhost:5432/postgres".to_string()),
             schema: file.schema_name,
+            accept_invalid_certs: file.accept_invalid_certs.unwrap_or(false),
             skip_tables: file.skip_tables.unwrap_or_default(),
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
@@ -110,9 +112,11 @@ fn pg_client(options: &Options) -> Result<Client, Box<dyn Error>> {
         .with_safe_defaults()
         .with_root_certificates(rustls::RootCertStore::empty())
         .with_no_client_auth();
-    config
-        .dangerous()
-        .set_certificate_verifier(Arc::new(danger::NoCertificateVerification {}));
+    if options.accept_invalid_certs {
+        config
+            .dangerous()
+            .set_certificate_verifier(Arc::new(danger::NoCertificateVerification {}));
+    }
     let tls = tokio_postgres_rustls::MakeRustlsConnect::new(config);
     Ok(Client::connect(&options.database_url, tls)?)
 }
@@ -242,8 +246,7 @@ struct Table {
     name: String,
     columns: Vec<Column>,
     schema: String,
-    size: u64,
-    // Bytes.
+    size: u64, // Bytes.
     rows: u64, // Estimate.
 }
 
