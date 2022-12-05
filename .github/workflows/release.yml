@@ -79,8 +79,12 @@ jobs:
 
   build-linux:
     name: Build Linux
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
+      - name: Install dev tools
+        run: | 
+          sudo apk update
+          sudo apk add build-base linux-headers zip libressl-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:

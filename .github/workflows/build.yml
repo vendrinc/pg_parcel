@@ -7,26 +7,26 @@ on:
 
 jobs:
   check:
-    name: Check, Format, Clippy
+    name: Format, Clippy, Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Install dev tools
+        run: |
+          sudo apt update
+          sudo apt -y install musl-tools libssl-dev
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
           components: clippy, rustfmt
+          target: x86_64-unknown-linux-musl
       - uses: Swatinem/rust-cache@v2
       - uses: actions-rs/cargo@v1
         name: check
         with:
           command: check
-      - uses: actions-rs/cargo@v1
-        name: check --no-default-features
-        with:
-          command: check
-          args: --no-default-features
       - uses: actions-rs/cargo@v1
         name: fmt
         with:
@@ -37,11 +37,20 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+      - uses: actions-rs/cargo@v1
+        name: build --no-default-features
+        with:
+          command: build
+          args: --target x86_64-unknown-linux-musl --no-default-features
 
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
+      - name: Install dev tools
+        run: |
+          sudo apt update
+          sudo apt -y install musl-tools libssl-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
