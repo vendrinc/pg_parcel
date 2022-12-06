@@ -83,8 +83,8 @@ jobs:
     steps:
       - name: Install dev tools
         run: | 
-          sudo apk update
-          sudo apk add build-base linux-headers zip libressl-dev
+          sudo apt update
+          sudo apt -y install musl-tools libssl-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
