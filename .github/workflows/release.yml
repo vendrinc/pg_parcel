@@ -6,7 +6,7 @@ on:
       - "v*"
 
 jobs:
-  aarch64-apple-darwin:
+  aarch64-apple-darwin-release:
     name: Build macOS ARM
     runs-on: macos-latest
     steps:
@@ -28,7 +28,7 @@ jobs:
           path: target/aarch64-apple-darwin/release/pg_parcel
           if-no-files-found: error
 
-  x86_64-apple-darwin:
+  x86_64-apple-darwin-release:
     name: Build macOS Intel
     runs-on: macos-latest
     steps:
@@ -50,10 +50,10 @@ jobs:
           path: target/x86_64-apple-darwin/release/pg_parcel
           if-no-files-found: error
 
-  macos-universal:
+  macos-universal-release:
     name: Build macOS Universal
     runs-on: macos-latest
-    needs: [aarch64-apple-darwin, x86_64-apple-darwin]
+    needs: [aarch64-apple-darwin-release, x86_64-apple-darwin-release]
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -77,7 +77,7 @@ jobs:
           path: pg_parcel-apple-darwin
           if-no-files-found: error
 
-  build-linux:
+  build-linux-release:
     name: Build Linux
     runs-on: ubuntu-22.04
     steps:
@@ -105,7 +105,7 @@ jobs:
 
   create-release:
     name: Create release
-    needs: [macos-universal, build-linux]
+    needs: [macos-universal-release, build-linux-release]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/download-artifact@v2
