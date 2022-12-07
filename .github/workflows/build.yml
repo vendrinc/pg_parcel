@@ -41,6 +41,7 @@ jobs:
   build-linux:
     name: Build Linux
     runs-on: ubuntu-22.04
+    needs: [ check ]
     steps:
       - name: Install dev tools
         run: |
@@ -65,6 +66,7 @@ jobs:
   build-aarch64-apple-darwin:
     name: Build macOS ARM
     runs-on: macos-latest
+    needs: [ check ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -78,12 +80,14 @@ jobs:
         with:
           command: build
           args: --release --target aarch64-apple-darwin
-      - name: Smoke test
-        run: arch -arm64e target/aarch64-apple-darwin/release/pg_parcel --help
+  # There's no ARM64 macos available in github actions.
+  #      - name: Smoke test
+  #        run: arch -arm64e target/aarch64-apple-darwin/release/pg_parcel --help
 
   build-x86_64-apple-darwin:
     name: Build macOS Intel
     runs-on: macos-latest
+    needs: [ check ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -103,11 +107,8 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-22.04
+    needs: [ check ]
     steps:
-      - name: Install dev tools
-        run: |
-          sudo apt update
-          sudo apt -y install musl-tools libssl-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
