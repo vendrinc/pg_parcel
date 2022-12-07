@@ -54,7 +54,7 @@ jobs:
           toolchain: stable
           override: true
           target: x86_64-unknown-linux-musl
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - uses: actions-rs/cargo@v1
         with:
           command: build
@@ -75,7 +75,7 @@ jobs:
           toolchain: stable
           override: true
           target: aarch64-apple-darwin
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - uses: actions-rs/cargo@v1
         with:
           command: build
@@ -96,7 +96,7 @@ jobs:
           toolchain: stable
           override: true
           target: x86_64-apple-darwin
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - uses: actions-rs/cargo@v1
         with:
           command: build
