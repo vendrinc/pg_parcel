@@ -10,7 +10,7 @@ jobs:
     name: Format, Clippy
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dev tools
         run: |
           sudo apt update
@@ -47,7 +47,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt -y install musl-tools libssl-dev
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -68,7 +68,7 @@ jobs:
     runs-on: macos-latest
     needs: [ check ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -89,7 +89,7 @@ jobs:
     runs-on: macos-latest
     needs: [ check ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -109,7 +109,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [ check ]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
