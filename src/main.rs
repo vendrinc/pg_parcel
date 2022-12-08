@@ -4,6 +4,7 @@ mod sql_string;
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use inputfile::InputFile;
+use itertools::intersperse;
 use lazy_static::lazy_static;
 use postgres::Client;
 use regex::Regex;
@@ -25,9 +26,12 @@ struct Args {
     #[clap(default_value_t = String::from("./pg_parcel.toml"))]
     file: String,
 
-    /// Dump only columns where `column_name` is this value
-    #[clap(short, long, display_order = 2)]
-    id: String,
+    /// Dump only columns where `column_name` is one of these values.
+    ///
+    /// Multiple values can be specified by using this option more than once. At
+    /// least one value must be given.
+    #[clap(name = "id", short, long, required = true, display_order = 2)]
+    ids: Vec<String>,
 
     /// Override database URL in parcel config.
     #[clap(long, display_order = 3)]
@@ -57,7 +61,7 @@ struct Args {
 /// Options here is a combination of command line arguments and contents of the slicefile.
 struct Options {
     column_name: String,
-    column_value: String,
+    column_values: Vec<String>,
     schema: String,
     database_url: String,
     accept_invalid_certs: bool,
@@ -73,7 +77,7 @@ impl Options {
         let file = InputFile::load(Path::new(&args.file))?;
         let options = Options {
             column_name: file.column_name,
-            column_value: args.id,
+            column_values: args.ids,
             database_url: file
                 .database_url
                 .or(args.database_url)
@@ -259,11 +263,13 @@ impl Table {
         )
     }
     fn copy_out_query(&self, options: &Options) -> String {
+        let column_values = options.column_values.iter().map(|s| s.sql_value());
+        let column_values = intersperse(column_values, ",".to_string()).collect::<String>();
         if let Some(query) = options.overrides.get(&self.name) {
             lazy_static! {
-                static ref RE: Regex = Regex::new(r":id\b").unwrap();
+                static ref RE: Regex = Regex::new(r":ids\b").unwrap();
             }
-            RE.replace_all(query, &options.column_value.sql_value())
+            RE.replace_all(query, format!("({column_values})"))
                 .to_string()
         } else {
             let query = format!(
@@ -277,13 +283,10 @@ impl Table {
                 .find(|column| column.name == options.column_name)
             {
                 let column_ident = options.column_name.sql_identifier();
-                let column_value = options.column_value.sql_value();
                 if scope_column.is_nullable {
-                    format!(
-                        "{query} WHERE {column_ident} = {column_value} OR {column_ident} IS NULL"
-                    )
+                    format!("{query} WHERE {column_ident} IN ({column_values}) OR {column_ident} IS NULL")
                 } else {
-                    format!("{query} WHERE {column_ident} = {column_value}")
+                    format!("{query} WHERE {column_ident} IN ({column_values})")
                 }
             } else {
                 query
