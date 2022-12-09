@@ -7,10 +7,10 @@ on:
 
 jobs:
   check:
-    name: Format, Clippy, Build
+    name: Format, Clippy
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install dev tools
         run: |
           sudo apt update
@@ -37,21 +37,79 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
-      - uses: actions-rs/cargo@v1
-        name: build --no-default-features
-        with:
-          command: build
-          args: --target x86_64-unknown-linux-musl --no-default-features
 
-  test:
-    name: Test
+  build-linux:
+    name: Build Linux
     runs-on: ubuntu-22.04
+    needs: [ check ]
     steps:
       - name: Install dev tools
         run: |
           sudo apt update
           sudo apt -y install musl-tools libssl-dev
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: x86_64-unknown-linux-musl
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target x86_64-unknown-linux-musl
+      - name: Smoke test
+        run: target/x86_64-unknown-linux-musl/release/pg_parcel --help
+
+
+  build-aarch64-apple-darwin:
+    name: Build macOS ARM
+    runs-on: macos-latest
+    needs: [ check ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target aarch64-apple-darwin
+  # There's no ARM64 macos available in github actions.
+  #      - name: Smoke test
+  #        run: arch -arm64e target/aarch64-apple-darwin/release/pg_parcel --help
+
+  build-x86_64-apple-darwin:
+    name: Build macOS Intel
+    runs-on: macos-latest
+    needs: [ check ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target x86_64-apple-darwin
+      - name: Smoke test
+        run: target/x86_64-apple-darwin/release/pg_parcel --help
+
+  test:
+    name: Test
+    runs-on: ubuntu-22.04
+    needs: [ check ]
+    steps:
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal

@@ -6,18 +6,18 @@ on:
       - "v*"
 
 jobs:
-  aarch64-apple-darwin:
+  aarch64-apple-darwin-release:
     name: Build macOS ARM
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
           target: aarch64-apple-darwin
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - uses: actions-rs/cargo@v1
         with:
           command: build
@@ -28,32 +28,34 @@ jobs:
           path: target/aarch64-apple-darwin/release/pg_parcel
           if-no-files-found: error
 
-  x86_64-apple-darwin:
+  x86_64-apple-darwin-release:
     name: Build macOS Intel
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
           target: x86_64-apple-darwin
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --target x86_64-apple-darwin
+      - name: Smoke test
+        run: target/x86_64-apple-darwin/release/pg_parcel --help
       - uses: actions/upload-artifact@v2
         with:
           name: x86_64-apple-darwin
           path: target/x86_64-apple-darwin/release/pg_parcel
           if-no-files-found: error
 
-  macos-universal:
+  macos-universal-release:
     name: Build macOS Universal
     runs-on: macos-latest
-    needs: [aarch64-apple-darwin, x86_64-apple-darwin]
+    needs: [aarch64-apple-darwin-release, x86_64-apple-darwin-release]
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -71,13 +73,15 @@ jobs:
             -output pg_parcel-apple-darwin \
             pg_parcel-x86_64-apple-darwin/pg_parcel \
             pg_parcel-aarch64-apple-darwin/pg_parcel
+      - name: Smoke test
+        run: pg_parcel-apple-darwin --help
       - uses: actions/upload-artifact@v2
         with:
           name: apple-darwin
           path: pg_parcel-apple-darwin
           if-no-files-found: error
 
-  build-linux:
+  build-linux-release:
     name: Build Linux
     runs-on: ubuntu-22.04
     steps:
@@ -85,18 +89,20 @@ jobs:
         run: | 
           sudo apt update
           sudo apt -y install musl-tools libssl-dev
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
           target: x86_64-unknown-linux-musl
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release --target x86_64-unknown-linux-musl
+      - name: Smoke test
+        run: target/x86_64-unknown-linux-musl/release/pg_parcel --help
       - uses: actions/upload-artifact@v2
         with:
           name: linux
@@ -105,7 +111,7 @@ jobs:
 
   create-release:
     name: Create release
-    needs: [macos-universal, build-linux]
+    needs: [macos-universal-release, build-linux-release]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/download-artifact@v2
