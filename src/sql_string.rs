@@ -9,12 +9,12 @@ pub trait SqlString {
 
 impl SqlString for String {
     fn sql_value(&self) -> Self {
-        format!(r#"'{}'"#, self)
+        format!(r#"'{self}'"#)
     }
 
     fn sql_identifier(&self) -> Self {
         if needs_quoting(self) {
-            return format!(r#""{}""#, self);
+            return format!(r#""{self}""#);
         }
         self.to_owned()
     }

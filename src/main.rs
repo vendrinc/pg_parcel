@@ -207,7 +207,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         for table in tables.iter() {
             let query = table.copy_out_query(&options);
             // let query = format!("{query} LIMIT 10"); // TESTING ONLY
-            let copy_statement = format!("COPY ({}) TO stdout;", query);
+            let copy_statement = format!("COPY ({query}) TO stdout;");
             pb.set_message(table.name.to_owned());
 
             let mut stdout = std::io::stdout();
