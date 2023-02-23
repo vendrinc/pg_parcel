@@ -10,7 +10,6 @@ use postgres::Client;
 use regex::Regex;
 use sql_string::SqlString;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::error::Error;
 use std::io::Write;
 use std::path::Path;
@@ -85,7 +84,7 @@ struct Options {
     schema: String,
     database_url: String,
     accept_invalid_certs: bool,
-    skip_tables: HashSet<String>,
+    skip_tables: Vec<Regex>,
     overrides: HashMap<String, String>,
     estimate_only: bool,
     truncate: bool,
@@ -124,7 +123,13 @@ impl Options {
                 .unwrap_or_else(|| "postgres://localhost:5432/postgres".to_string()),
             schema: file.schema_name,
             accept_invalid_certs: file.accept_invalid_certs.unwrap_or(false),
-            skip_tables: file.skip_tables.unwrap_or_default(),
+            skip_tables: match file.skip_tables {
+                Some(patterns) => patterns
+                    .into_iter()
+                    .map(|pattern| Regex::new(&pattern))
+                    .collect::<Result<_, _>>()?,
+                None => Vec::new(),
+            },
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
             truncate: args.truncate,
@@ -417,7 +422,13 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
         .into_iter()
         .filter_map(|row| {
             let table_name: String = row.get("table_name");
-            if !options.skip_tables.contains(&table_name) {
+            let skip_table = options
+                .skip_tables
+                .iter()
+                .any(|regex| regex.is_match(&table_name));
+            if skip_table {
+                None
+            } else {
                 let table_size_s: String = row.get("table_size");
                 let table_size: u64 = table_size_s.parse().unwrap_or(0);
                 let table_rows_s: String = row.get("table_rows");
@@ -436,8 +447,6 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
                     size: table_size,
                     rows: table_rows,
                 })
-            } else {
-                None
             }
         })
         .collect();
