@@ -56,6 +56,10 @@ struct Args {
     /// constant factor.
     #[clap(long, display_order = 10)]
     estimate_only: bool,
+
+    /// Populate session variable `pg_parcel.features` with these strings.
+    #[clap(long, value_delimiter = ',')]
+    features: Option<Vec<String>>,
 }
 
 /// Options here is a combination of command line arguments and contents of the slicefile.
@@ -69,6 +73,7 @@ struct Options {
     overrides: HashMap<String, String>,
     estimate_only: bool,
     truncate: bool,
+    features: Option<Vec<String>>,
 }
 
 impl Options {
@@ -88,6 +93,7 @@ impl Options {
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
             truncate: args.truncate,
+            features: args.features,
         };
         Ok(options)
     }
@@ -127,11 +133,16 @@ fn pg_client(options: &Options) -> Result<Client, Box<dyn Error>> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let options = Options::load()?;
+
     let mut client = pg_client(&options)?;
 
     // Restrict `search_path` to just the one schema.
     client.execute(&format!("SET SCHEMA {}", options.schema.sql_value()), &[])?;
     client.execute("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])?;
+    if let Some(features) = &options.features {
+        let array_literal = format!("{{{}}}", features.join(","));
+        client.execute(&format!("SET pg_parcel.features = '{array_literal}'"), &[])?;
+    }
 
     let tables = get_tables(&options)?;
 

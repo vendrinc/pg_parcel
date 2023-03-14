@@ -14,7 +14,7 @@ column_name = "customer_id"
 schema_name = "public"
 database_url = "postgres://localhost:15432/postgres"
 skip_tables = [
-  "daily_exchange_rates"
+  "users_backup"
 ]
 
 [overrides]
@@ -28,6 +28,19 @@ user_files = """
   from users_files
   join users on users.id = user_files.user_id
   where users.customer_id = :id
+"""
+daily_exchange_rates = """
+  select * from daily_exchange_rates
+  where ARRAY['currency'] && (current_setting('pg_parcel.features')::text[]);
+"""
+audit_log = """
+  select * from audit_log
+  where user_id = :id and
+  (
+    ARRAY['audit'] && (current_setting('pg_parcel.features')::text[])
+    or created_at >= NOW() - INTERVAL '30 days'
+    or updated_at >= NOW() - INTERVAL '30 days'
+  );
 """
 ```
 
