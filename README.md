@@ -35,7 +35,7 @@ daily_exchange_rates = """
 """
 audit_log = """
   select * from audit_log
-  where user_id = :id and
+  where customer_id = :id and
   (
     ARRAY['audit'] && (current_setting('pg_parcel.features')::text[])
     or created_at >= NOW() - INTERVAL '30 days'
