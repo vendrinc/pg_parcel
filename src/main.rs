@@ -14,8 +14,10 @@ use std::collections::HashSet;
 use std::error::Error;
 use std::io::Write;
 use std::path::Path;
+use std::process;
 use std::sync::Arc;
 use std::time::Duration;
+use suggest::Suggest;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -57,8 +59,9 @@ struct Args {
     #[clap(long, display_order = 10)]
     estimate_only: bool,
 
-    /// Populate session variable `pg_parcel.features` with these strings.
-    #[clap(long, value_delimiter = ',', default_value = "")]
+    /// Populate session variable `pg_parcel.features` with these strings. If
+    /// set, it takes precedence over the default_features in pg_parcel.toml
+    #[clap(long, value_delimiter = ',', multiple_occurrences(true))]
     features: Option<Vec<String>>,
 }
 
@@ -73,13 +76,38 @@ struct Options {
     overrides: HashMap<String, String>,
     estimate_only: bool,
     truncate: bool,
-    features: Option<Vec<String>>,
+    features: HashSet<String>,
 }
 
 impl Options {
     pub fn load() -> Result<Options, Box<dyn Error>> {
         let args = Args::parse();
         let file = InputFile::load(Path::new(&args.file))?;
+
+        // Sanity check the requested and the configured features
+        if let (Some(default_features), Some(requested_features)) =
+            (&file.default_features, &args.features)
+        {
+            for requested in requested_features.iter() {
+                if !default_features.contains(requested) {
+                    if let Some(sugg) = default_features.suggest(requested) {
+                        eprintln!("Did you mean `{}`?", sugg);
+                    }
+                    eprintln!("No feature named `{requested}` defined in {}", &args.file);
+                    process::exit(0);
+                }
+            }
+        }
+
+        // default_features take precendence, falling back to requested, and finally empty.
+        let features: HashSet<String> = if let Some(f) = args.features {
+            f.into_iter().collect()
+        } else if let Some(f) = file.default_features {
+            f
+        } else {
+            HashSet::new()
+        };
+
         let options = Options {
             column_name: file.column_name,
             column_values: args.ids,
@@ -93,7 +121,7 @@ impl Options {
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
             truncate: args.truncate,
-            features: args.features,
+            features,
         };
         Ok(options)
     }
@@ -139,9 +167,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Restrict `search_path` to just the one schema.
     client.execute(&format!("SET SCHEMA {}", options.schema.sql_value()), &[])?;
     client.execute("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])?;
-    if let Some(features) = &options.features {
-        let array_literal = format!("{{{}}}", features.join(","));
+    if !&options.features.is_empty() {
+        let vec: Vec<String> = options.features.clone().into_iter().collect();
+        let array_literal = format!("{{{}}}", vec.join(","));
         client.execute(&format!("SET pg_parcel.features = '{array_literal}'"), &[])?;
+        eprintln!("Using only features {array_literal}");
     }
 
     let tables = get_tables(&options)?;

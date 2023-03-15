@@ -13,6 +13,7 @@ pub struct InputFile {
     pub accept_invalid_certs: Option<bool>,
     pub skip_tables: Option<HashSet<String>>,
     pub overrides: Option<HashMap<String, String>>,
+    pub default_features: Option<HashSet<String>>,
 }
 
 impl InputFile {
