@@ -20,14 +20,14 @@ skip_tables = [
 [overrides]
 # We only want the one customer identified by --id on the command line
 customers = """
-  select * from customers where id = :id
+  select * from customers where id in :ids
 """
 # The `user_files` table doesn't have a customer_id column, so we need to join.
 user_files = """
   select user_files.*
   from users_files
   join users on users.id = user_files.user_id
-  where users.customer_id = :id
+  where users.customer_id in :ids
 """
 daily_exchange_rates = """
   select * from daily_exchange_rates
@@ -35,7 +35,7 @@ daily_exchange_rates = """
 """
 audit_log = """
   select * from audit_log
-  where customer_id = :id and
+  where customer_id in :ids and
   (
     ARRAY['audit'] && (current_setting('pg_parcel.features')::text[])
     or created_at >= NOW() - INTERVAL '30 days'

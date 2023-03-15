@@ -58,7 +58,7 @@ struct Args {
     estimate_only: bool,
 
     /// Populate session variable `pg_parcel.features` with these strings.
-    #[clap(long, value_delimiter = ',')]
+    #[clap(long, value_delimiter = ',', default_value = "")]
     features: Option<Vec<String>>,
 }
 
