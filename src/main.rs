@@ -94,7 +94,7 @@ impl Options {
                         eprintln!("Did you mean `{}`?", sugg);
                     }
                     eprintln!("No feature named `{requested}` defined in {}", &args.file);
-                    process::exit(0);
+                    process::exit(1);
                 }
             }
         }
