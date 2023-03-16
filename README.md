@@ -13,6 +13,7 @@ Most options are specified via config file.
 column_name = "customer_id"
 schema_name = "public"
 database_url = "postgres://localhost:15432/postgres"
+features = ["currency", "audit"]
 skip_tables = [
   "users_backup"
 ]

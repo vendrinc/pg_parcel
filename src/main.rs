@@ -14,10 +14,8 @@ use std::collections::HashSet;
 use std::error::Error;
 use std::io::Write;
 use std::path::Path;
-use std::process;
 use std::sync::Arc;
 use std::time::Duration;
-use suggest::Suggest;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
@@ -61,8 +59,23 @@ struct Args {
 
     /// Populate session variable `pg_parcel.features` with these strings. If
     /// set, it takes precedence over the default_features in pg_parcel.toml
-    #[clap(long, value_delimiter = ',', multiple_occurrences(true))]
+    #[clap(
+        long,
+        value_delimiter = ',',
+        multiple_occurrences(true),
+        display_order = 5
+    )]
     features: Option<Vec<String>>,
+
+    /// Omit this feature from `pg_parcel.features`, overriding both --features
+    /// and pg_parcel.toml.
+    #[clap(
+        long = "no-feature",
+        value_delimiter = ',',
+        multiple_occurrences(true),
+        display_order = 6
+    )]
+    skipped_features: Option<Vec<String>>,
 }
 
 /// Options here is a combination of command line arguments and contents of the slicefile.
@@ -84,28 +97,23 @@ impl Options {
         let args = Args::parse();
         let file = InputFile::load(Path::new(&args.file))?;
 
-        // Sanity check the requested and the configured features
-        if let (Some(default_features), Some(requested_features)) =
-            (&file.default_features, &args.features)
-        {
-            for requested in requested_features.iter() {
-                if !default_features.contains(requested) {
-                    if let Some(sugg) = default_features.suggest(requested) {
-                        eprintln!("Did you mean `{}`?", sugg);
-                    }
-                    eprintln!("No feature named `{requested}` defined in {}", &args.file);
-                    process::exit(1);
-                }
+        // Features requested at the command-line take precedence, then the
+        // config file, then empty.
+        let mut features: HashSet<String> = match (args.features, file.features.clone()) {
+            (Some(arg), _) => {
+                file.validate_features(&arg);
+                arg.into_iter().collect()
             }
-        }
-
-        // Features requested at the command-line take precedence,
-        // then default_features, then empty.
-        let features: HashSet<String> = match (args.features, file.default_features) {
-            (Some(features), _) => features.into_iter().collect(),
-            (None, Some(features)) => features,
+            (None, Some(defined)) => defined,
             (None, None) => HashSet::new(),
         };
+
+        if let Some(remove) = args.skipped_features {
+            file.validate_features(&remove);
+            for feature in remove.iter() {
+                features.remove(feature);
+            }
+        }
 
         let options = Options {
             column_name: file.column_name,
@@ -166,11 +174,22 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Restrict `search_path` to just the one schema.
     client.execute(&format!("SET SCHEMA {}", options.schema.sql_value()), &[])?;
     client.execute("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])?;
-    if !&options.features.is_empty() {
-        let vec: Vec<String> = options.features.clone().into_iter().collect();
-        let array_literal = format!("{{{}}}", vec.join(","));
-        client.execute(&format!("SET pg_parcel.features = '{array_literal}'"), &[])?;
-        eprintln!("Using only features {array_literal}");
+
+    // Populate features settings
+    client.execute(
+        &format!(
+            "SET pg_parcel.features = '{{{}}}'",
+            &options
+                .features
+                .clone()
+                .into_iter()
+                .collect::<Vec<String>>()
+                .join(",")
+        ),
+        &[],
+    )?;
+    for feature in options.features.iter() {
+        client.execute(&format!("SET pg_parcel.feature.{feature} = true"), &[])?;
     }
 
     let tables = get_tables(&options)?;
