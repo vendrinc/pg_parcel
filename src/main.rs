@@ -192,6 +192,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         client.execute(&format!("SET pg_parcel.feature.{feature} = true"), &[])?;
     }
 
+    client.execute(
+        &format!(
+            "SET pg_parcel.ids = '{{{}}}'",
+            &options.column_values.join(",")
+        ),
+        &[],
+    )?;
+
     let tables = get_tables(&options)?;
 
     let pb = ProgressBar::new(tables.len() as u64);
