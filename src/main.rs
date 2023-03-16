@@ -100,12 +100,10 @@ impl Options {
         }
 
         // default_features take precendence, falling back to requested, and finally empty.
-        let features: HashSet<String> = if let Some(f) = args.features {
-            f.into_iter().collect()
-        } else if let Some(f) = file.default_features {
-            f
-        } else {
-            HashSet::new()
+        let features: HashSet<String> = match (args.features, file.default_features) {
+            (Some(features), _) => features.into_iter().collect(),
+            (None, Some(features)) => features,
+            (None, None) => HashSet::new(),
         };
 
         let options = Options {
