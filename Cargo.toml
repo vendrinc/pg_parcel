@@ -1,14 +1,14 @@
 [package]
 authors = ["Jacob Elder"]
-categories = ["command-line-utilities"]
-description = "Dump horizontal slices from PostgreSQL schemas. Like if pg_dump had a --where option."
+categories = ["database", "command-line-utilities"]
+description = "A very minimal subset of `pg_dump --data-only` with multi-tenancy in mind."
 edition = "2021"
 exclude = ["screenshots", ".vscode", "release.sh", "Brewfile", ".github"]
 keywords = ["postgresql"]
 license = "MIT OR Apache-2.0"
 name = "pg_parcel"
-repository = "https://github.com/Blissfully/pg_parcel"
-version = "0.4.4"
+repository = "https://github.com/vendrinc/pg_parcel"
+version = "1.0.0"
 
 [dependencies]
 clap = { version = "3.1.5", features = ["derive", "wrap_help"] }
