@@ -7,7 +7,7 @@ use inputfile::InputFile;
 use itertools::intersperse;
 use lazy_static::lazy_static;
 use postgres::Client;
-use regex::Regex;
+use regex::{Regex, RegexSet};
 use sql_string::SqlString;
 use std::collections::HashMap;
 use std::error::Error;
@@ -84,7 +84,7 @@ struct Options {
     schema: String,
     database_url: String,
     accept_invalid_certs: bool,
-    skip_tables: Vec<Regex>,
+    skip_tables: RegexSet,
     overrides: HashMap<String, String>,
     estimate_only: bool,
     truncate: bool,
@@ -124,11 +124,8 @@ impl Options {
             schema: file.schema_name,
             accept_invalid_certs: file.accept_invalid_certs.unwrap_or(false),
             skip_tables: match file.skip_tables {
-                Some(patterns) => patterns
-                    .into_iter()
-                    .map(|pattern| Regex::new(&pattern))
-                    .collect::<Result<_, _>>()?,
-                None => Vec::new(),
+                Some(patterns) => RegexSet::new(patterns)?,
+                None => RegexSet::empty(),
             },
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
@@ -422,11 +419,7 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
         .into_iter()
         .filter_map(|row| {
             let table_name: String = row.get("table_name");
-            let skip_table = options
-                .skip_tables
-                .iter()
-                .any(|regex| regex.is_match(&table_name));
-            if skip_table {
+            if options.skip_tables.is_match(&table_name) {
                 None
             } else {
                 let table_size_s: String = row.get("table_size");
