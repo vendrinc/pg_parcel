@@ -99,7 +99,8 @@ impl Options {
             }
         }
 
-        // default_features take precendence, falling back to requested, and finally empty.
+        // Features requested at the command-line take precedence,
+        // then default_features, then empty.
         let features: HashSet<String> = match (args.features, file.default_features) {
             (Some(features), _) => features.into_iter().collect(),
             (None, Some(features)) => features,
