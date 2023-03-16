@@ -9,7 +9,7 @@ use lazy_static::lazy_static;
 use postgres::Client;
 use regex::{Regex, RegexSet};
 use sql_string::SqlString;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::io::Write;
 use std::path::Path;
