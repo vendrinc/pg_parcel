@@ -58,22 +58,12 @@ struct Args {
 
     /// Populate session variable `pg_parcel.features` with these strings. If
     /// set, it takes precedence over the default_features in pg_parcel.toml
-    #[clap(
-        long,
-        value_delimiter = ',',
-        multiple_occurrences(true),
-        display_order = 5
-    )]
+    #[clap(long, value_delimiter = ',', display_order = 5)]
     features: Option<Vec<String>>,
 
     /// Omit this feature from `pg_parcel.features`, overriding both --features
     /// and pg_parcel.toml.
-    #[clap(
-        long = "no-feature",
-        value_delimiter = ',',
-        multiple_occurrences(true),
-        display_order = 6
-    )]
+    #[clap(long = "no-feature", value_delimiter = ',', display_order = 6)]
     skipped_features: Option<Vec<String>>,
 }
 
