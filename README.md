@@ -45,6 +45,14 @@ audit_log = """
 """
 ```
 
+Override queries can still use `IN :ids` but session variables are now preferred.
+
+| Session Variable                   | Contains                                                                                                                                                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pg_parcel.ids`                    | The list of all values passed with `--id`                                                                                                                                                                      |
+| `pg_parcel.features`               | The list of features defined in the `pg_parcel.toml` file, minus any features turned off with `--no-feature`. If `--features` is set, they take precedence over the config file, but `--no-features` is final. |
+| `pg_partial.feature.`_`myfeature`_ | Same rules as `pg_parcel.features`, but one variable per setting. The value is just `true`                                                                                                                     |
+
 ## Releases
 
 We publish binaries for both Linux x86_64 (any distro, using [musl](https://musl.libc.org/)) and macOS Universal (both Intel and Apple Silicon in a single binary).
