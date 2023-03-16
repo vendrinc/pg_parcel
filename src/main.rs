@@ -56,6 +56,26 @@ struct Args {
     /// constant factor.
     #[clap(long, display_order = 10)]
     estimate_only: bool,
+
+    /// Populate session variable `pg_parcel.features` with these strings. If
+    /// set, it takes precedence over the default_features in pg_parcel.toml
+    #[clap(
+        long,
+        value_delimiter = ',',
+        multiple_occurrences(true),
+        display_order = 5
+    )]
+    features: Option<Vec<String>>,
+
+    /// Omit this feature from `pg_parcel.features`, overriding both --features
+    /// and pg_parcel.toml.
+    #[clap(
+        long = "no-feature",
+        value_delimiter = ',',
+        multiple_occurrences(true),
+        display_order = 6
+    )]
+    skipped_features: Option<Vec<String>>,
 }
 
 /// Options here is a combination of command line arguments and contents of the slicefile.
@@ -69,12 +89,32 @@ struct Options {
     overrides: HashMap<String, String>,
     estimate_only: bool,
     truncate: bool,
+    features: HashSet<String>,
 }
 
 impl Options {
     pub fn load() -> Result<Options, Box<dyn Error>> {
         let args = Args::parse();
         let file = InputFile::load(Path::new(&args.file))?;
+
+        // Features requested at the command-line take precedence, then the
+        // config file, then empty.
+        let mut features: HashSet<String> = match (args.features, file.features.clone()) {
+            (Some(arg), _) => {
+                file.validate_features(&arg);
+                arg.into_iter().collect()
+            }
+            (None, Some(defined)) => defined,
+            (None, None) => HashSet::new(),
+        };
+
+        if let Some(remove) = args.skipped_features {
+            file.validate_features(&remove);
+            for feature in remove.iter() {
+                features.remove(feature);
+            }
+        }
+
         let options = Options {
             column_name: file.column_name,
             column_values: args.ids,
@@ -88,6 +128,7 @@ impl Options {
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
             truncate: args.truncate,
+            features,
         };
         Ok(options)
     }
@@ -127,11 +168,37 @@ fn pg_client(options: &Options) -> Result<Client, Box<dyn Error>> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let options = Options::load()?;
+
     let mut client = pg_client(&options)?;
 
     // Restrict `search_path` to just the one schema.
     client.execute(&format!("SET SCHEMA {}", options.schema.sql_value()), &[])?;
     client.execute("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;", &[])?;
+
+    // Populate features settings
+    client.execute(
+        &format!(
+            "SET pg_parcel.features = '{{{}}}'",
+            &options
+                .features
+                .clone()
+                .into_iter()
+                .collect::<Vec<String>>()
+                .join(",")
+        ),
+        &[],
+    )?;
+    for feature in options.features.iter() {
+        client.execute(&format!("SET pg_parcel.feature.{feature} = true"), &[])?;
+    }
+
+    client.execute(
+        &format!(
+            "SET pg_parcel.ids = '{{{}}}'",
+            &options.column_values.join(",")
+        ),
+        &[],
+    )?;
 
     let tables = get_tables(&options)?;
 
