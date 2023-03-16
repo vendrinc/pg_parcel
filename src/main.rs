@@ -7,10 +7,9 @@ use inputfile::InputFile;
 use itertools::intersperse;
 use lazy_static::lazy_static;
 use postgres::Client;
-use regex::Regex;
+use regex::{Regex, RegexSet};
 use sql_string::SqlString;
-use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::io::Write;
 use std::path::Path;
@@ -85,7 +84,7 @@ struct Options {
     schema: String,
     database_url: String,
     accept_invalid_certs: bool,
-    skip_tables: HashSet<String>,
+    skip_tables: RegexSet,
     overrides: HashMap<String, String>,
     estimate_only: bool,
     truncate: bool,
@@ -124,7 +123,10 @@ impl Options {
                 .unwrap_or_else(|| "postgres://localhost:5432/postgres".to_string()),
             schema: file.schema_name,
             accept_invalid_certs: file.accept_invalid_certs.unwrap_or(false),
-            skip_tables: file.skip_tables.unwrap_or_default(),
+            skip_tables: match file.skip_tables {
+                Some(patterns) => RegexSet::new(patterns)?,
+                None => RegexSet::empty(),
+            },
             overrides: file.overrides.unwrap_or_default(),
             estimate_only: args.estimate_only,
             truncate: args.truncate,
@@ -236,16 +238,19 @@ fn main() -> Result<(), Box<dyn Error>> {
             let row_selectivity = (100f64 * row_count as f64 / table.rows as f64)
                 .max(0.0) // Deal with NAN.
                 .clamp(0.0, 100.0);
-            let size_estimate = ((row_count as f64 * table.size as f64)
-                / (table.rows as f64 * 1024f64))
-                .max(0.0) as u64; // Deal with NAN.
+            let size_estimate = if table.rows > 0 {
+                let size = (row_count as f64 * table.size as f64) / (table.rows as f64 * 1024f64);
+                size.max(0.0) as u64 // Deal with NAN.
+            } else {
+                0u64
+            };
             pb.println(format!(
                 "{row_frac:>20} | {row_selectivity:>6.2}% | {size_estimate:10.0} kiB | {name}",
                 row_frac = format!("{row_count} of {rows_total}", rows_total = table.rows),
                 name = table.name
             ));
             pb.inc(1);
-            total_size += size_estimate;
+            total_size = total_size.saturating_add(size_estimate);
         }
         pb.finish_with_message(format!("Total size estimated at: {total_size} kiB"));
     } else {
@@ -417,7 +422,9 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
         .into_iter()
         .filter_map(|row| {
             let table_name: String = row.get("table_name");
-            if !options.skip_tables.contains(&table_name) {
+            if options.skip_tables.is_match(&table_name) {
+                None
+            } else {
                 let table_size_s: String = row.get("table_size");
                 let table_size: u64 = table_size_s.parse().unwrap_or(0);
                 let table_rows_s: String = row.get("table_rows");
@@ -436,8 +443,6 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
                     size: table_size,
                     rows: table_rows,
                 })
-            } else {
-                None
             }
         })
         .collect();

@@ -15,7 +15,9 @@ schema_name = "public"
 database_url = "postgres://localhost:15432/postgres"
 features = ["currency", "audit"]
 skip_tables = [
-  "users_backup"
+  "_backup&"
+  "^obsolete_"
+  # ... more regular expressions
 ]
 
 [overrides]
