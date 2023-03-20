@@ -9,6 +9,7 @@ use lazy_static::lazy_static;
 use postgres::Client;
 use regex::{Regex, RegexSet};
 use sql_string::SqlString;
+use sqlx::postgres::PgPoolOptions;
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::io::Write;
@@ -158,7 +159,8 @@ fn pg_client(options: &Options) -> Result<Client, Box<dyn Error>> {
     Ok(Client::connect(&options.database_url, tls)?)
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     let options = Options::load()?;
 
     let mut client = pg_client(&options)?;
@@ -378,16 +380,16 @@ struct Column {
     pub is_nullable: bool,
 }
 
-fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
-    let mut client = pg_client(options)?;
-    let query = format!(
+async fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
+    let pool = PgPoolOptions::new().connect(&options.database_url).await?;
+    let records = sqlx::query!(
         r#"
         select
-          tables.table_name,
-          pg_total_relation_size(pg_class.oid)::text as table_size,
-          max(pg_class.reltuples::int8)::text as table_rows, -- https://wiki.postgresql.org/wiki/Count_estimate
-          array_agg(columns.column_name::text order by columns.ordinal_position) as column_names,
-          array_agg(columns.is_nullable = 'YES' order by columns.ordinal_position) as column_nullables
+          tables.table_name as "table_name!",
+          pg_total_relation_size(pg_class.oid) as "table_size!",
+          max(pg_class.reltuples::int8) as "table_rows!", -- https://wiki.postgresql.org/wiki/Count_estimate
+          array_agg(columns.column_name::text order by columns.ordinal_position) as "column_names!",
+          array_agg(columns.is_nullable = 'YES' order by columns.ordinal_position) as "column_nullables!"
         from information_schema.tables
         join information_schema.columns on (
           columns.table_catalog = tables.table_catalog
@@ -400,44 +402,42 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
         join pg_class on (
           pg_class.relnamespace = pg_namespace.oid
           and pg_class.relname = tables.table_name)
-        where tables.table_schema = {schema}
+        where tables.table_schema = $1
         and tables.table_type = 'BASE TABLE'
         group by tables.table_name, pg_class.oid
         order by tables.table_name
-        "#,
-        schema = options.schema.sql_value(),
-    );
-    let mut tables: Vec<Table> = client
-        .query(&query, &[])?
-        .into_iter()
+        "#, &options.schema
+    )
+    .fetch_all(&pool)
+    .await?;
+    println!("{:#?}", records);
+
+    let tables: Vec<Table> = records
+        .iter()
         .filter_map(|row| {
-            let table_name: String = row.get("table_name");
-            if options.skip_tables.is_match(&table_name) {
+            println!("{:?}", row);
+            if options.skip_tables.is_match(&row.table_name) {
                 None
             } else {
-                let table_size_s: String = row.get("table_size");
-                let table_size: u64 = table_size_s.parse().unwrap_or(0);
-                let table_rows_s: String = row.get("table_rows");
-                let table_rows: u64 = table_rows_s.parse().unwrap_or(0);
-                let column_names: Vec<String> = row.get("column_names");
-                let column_nullables: Vec<bool> = row.get("column_nullables");
-                let columns = column_names
-                    .into_iter()
-                    .zip(column_nullables)
-                    .map(|(name, is_nullable)| Column { name, is_nullable })
+                let columns = row
+                    .column_names
+                    .iter()
+                    .zip(row.column_nullables.clone())
+                    .map(|(name, is_nullable)| Column {
+                        name: name.to_string(),
+                        is_nullable,
+                    })
                     .collect();
                 Some(Table {
-                    name: table_name,
+                    name: row.table_name.to_string(),
                     columns,
-                    schema: options.schema.clone(),
-                    size: table_size,
-                    rows: table_rows,
+                    schema: options.schema.to_string(),
+                    size: row.table_size as u64,
+                    rows: row.table_rows as u64,
                 })
             }
         })
         .collect();
-
-    tables.sort_by(|a, b| a.name.cmp(&b.name));
 
     Ok(tables)
 }

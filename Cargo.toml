@@ -24,3 +24,16 @@ serde_derive = "1.0.136"
 toml = "0.7.3"
 webpki = "0.22.0"
 suggest = "0.4.0"
+sqlx = { version = "0.6.2", features = [
+  "postgres",
+  "uuid",
+  "macros",
+  "chrono",
+  "decimal",
+  "bigdecimal",
+  "ipnetwork",
+  "json",
+  "tls",
+  "runtime-tokio-rustls",
+] }
+tokio = { version = "1.23.0", features = ["full"] }
