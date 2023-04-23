@@ -355,19 +355,23 @@ impl Table {
     }
     fn current_sequence_value_query(&self, sequence: &Sequence) -> String {
         format!(
-            r#"SELECT COALESCE(MAX("{column_name}"), 1)::text FROM {schema}."{table_name}""#,
-            schema = &self.schema,
-            column_name = sequence.column_name,
-            table_name = &self.name,
+            r#"SELECT COALESCE(MAX({column_name}), 1)::text FROM {qualified_table_name}"#,
+            column_name = sequence.column_name.sql_identifier(),
+            qualified_table_name = &self.sql_identifier(),
         )
     }
     fn restore_sequences_query(&self, sequence: &Sequence, current_sequence_value: u64) -> String {
+        let qualified_sequence_name = format!(
+            "{}.{}",
+            self.schema.sql_identifier(),
+            sequence.sequence_name.sql_identifier()
+        );
+
         format!(
-            r#"SELECT SETVAL('{schema}."{sequence_name}"', {current_sequence_value}) FROM {schema}."{table_name}""#,
-            schema = &self.schema,
-            sequence_name = sequence.sequence_name,
+            r#"SELECT SETVAL({qualified_sequence_name}, {current_sequence_value}) FROM {qualified_table_name}"#,
+            qualified_sequence_name = qualified_sequence_name.sql_value(),
             current_sequence_value = current_sequence_value,
-            table_name = &self.name,
+            qualified_table_name = &self.sql_identifier(),
         )
     }
     fn copy_out_query(&self, options: &Options) -> String {
@@ -489,7 +493,7 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
                     .collect();
                 let sequences: Vec<Sequence> = row
                     .get::<&str, Option<Vec<String>>>("sequences")
-                    .unwrap_or(Vec::with_capacity(0))
+                    .unwrap_or_default()
                     .iter()
                     .map(|seq| -> Sequence {
                         let mut parts = seq.split("::");
