@@ -245,6 +245,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         pb.finish_with_message(format!("Total size estimated at: {total_size} kiB"));
     } else {
         let mut sizes: Vec<(String, u64)> = Vec::with_capacity(tables.len());
+        // Disable triggers and FK constraint checks.
+        writeln!(std::io::stdout(), "SET session_replication_role = replica;")?;
 
         // Truncate tables first. There can be foreign key relationships between
         // tables so either we need to truncate all tables now or we need to
