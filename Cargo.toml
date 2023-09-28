@@ -8,7 +8,7 @@ keywords = ["postgresql"]
 license = "MIT OR Apache-2.0"
 name = "pg_parcel"
 repository = "https://github.com/vendrinc/pg_parcel"
-version = "1.1.0"
+version = "1.2.0"
 
 [dependencies]
 clap = { version = "4.1.8", features = ["derive", "wrap_help"] }
