@@ -290,7 +290,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             if total > 0 {
                 let mut stdout = std::io::stdout();
                 writeln!(stdout)?;
-                writeln!(stdout, "-- SUMMARY ---------------------------------")?;
+                writeln!(stdout, "-- Summary ---------------------------------")?;
                 writeln!(stdout, "--        Bytes | % of total | Table name")?;
                 writeln!(stdout, "-- -----------------------------------------")?;
                 sizes.sort_by_key(|(.., size)| *size);
@@ -333,8 +333,8 @@ impl Table {
             lazy_static! {
                 static ref RE: Regex = Regex::new(r":ids\b").unwrap();
             }
-            RE.replace_all(query, format!("({column_values})"))
-                .to_string()
+            // Replace :ids with the actual values, but don't modify the rest of the query
+            RE.replace_all(query, format!("({column_values})")).to_string()
         } else {
             let query = format!(
                 "SELECT {} FROM {}",
@@ -443,3 +443,6 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
 
     Ok(tables)
 }
+
+#[cfg(test)]
+mod tests;
