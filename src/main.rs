@@ -290,7 +290,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             if total > 0 {
                 let mut stdout = std::io::stdout();
                 writeln!(stdout)?;
-                writeln!(stdout, "-- SUMMARY ---------------------------------")?;
+                writeln!(stdout, "-- Summary ---------------------------------")?;
                 writeln!(stdout, "--        Bytes | % of total | Table name")?;
                 writeln!(stdout, "-- -----------------------------------------")?;
                 sizes.sort_by_key(|(.., size)| *size);
@@ -443,3 +443,6 @@ fn get_tables(options: &Options) -> Result<Vec<Table>, Box<dyn Error>> {
 
     Ok(tables)
 }
+
+#[cfg(test)]
+mod tests;
