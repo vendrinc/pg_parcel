@@ -333,7 +333,7 @@ impl Table {
             lazy_static! {
                 static ref RE: Regex = Regex::new(r":ids\b").unwrap();
             }
-            RE.replace_all(query, format!("({column_values})"))	            // Replace :ids with the actual values, but don't modify the rest of the query
+            RE.replace_all(query, format!("({column_values})"))
                 .to_string()       
          } else {
             let query = format!(
