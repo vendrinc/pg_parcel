@@ -334,8 +334,8 @@ impl Table {
                 static ref RE: Regex = Regex::new(r":ids\b").unwrap();
             }
             RE.replace_all(query, format!("({column_values})"))
-                .to_string()       
-         } else {
+                .to_string()
+        } else {
             let query = format!(
                 "SELECT {} FROM {}",
                 &self.column_list(),
